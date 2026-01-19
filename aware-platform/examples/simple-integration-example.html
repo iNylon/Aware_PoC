@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aware API - Quick Integration Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result pre {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .api-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .api-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .api-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🚀 Aware API Integration Example
+            <span id="apiStatus" class="api-status">Checking...</span>
+        </h1>
+        <p class="subtitle">Quick example showing how to integrate the Aware Material Tracking API</p>
+        
+        <div class="info-box">
+            <strong>📝 Note:</strong> Make sure the API server is running on <code>http://localhost:3000</code>
+            <br>Start it with: <code>cd apiPoc && npm start</code>
+        </div>
+        
+        <div id="alert" class="alert"></div>
+        
+        <form id="submissionForm">
+            <div class="form-group">
+                <label>Production Date *</label>
+                <input type="date" id="date" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Production Facility *</label>
+                <input type="text" id="facility" placeholder="e.g., Factory A" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Material Specification *</label>
+                <input type="text" id="materialSpec" placeholder="e.g., 16/1s" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Batch Number *</label>
+                <input type="text" id="batchNo" placeholder="e.g., BATCH-123" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Total Weight (kg) *</label>
+                <input type="number" id="weight" placeholder="e.g., 1000" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Material Type *</label>
+                <input type="text" id="materialType" placeholder="e.g., Organic Cotton" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Color *</label>
+                <input type="color" id="color" value="#FFA500">
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Sending to API...</p>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">
+                📤 Submit to API
+            </button>
+        </form>
+        
+        <div class="result" id="result">
+            <h3>✅ API Response:</h3>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+    
+    <!-- Include the Aware SDK -->
+    <script src="../web/aware-sdk.js"></script>
+    
+    <script>
+        // Initialize SDK
+        const sdk = new AwareSDK('http://localhost:3000');
+        
+        // Check API status on load
+        async function checkAPIStatus() {
+            const statusElement = document.getElementById('apiStatus');
+            try {
+                const response = await fetch('http://localhost:3000/');
+                if (response.ok) {
+                    statusElement.textContent = '● Online';
+                    statusElement.className = 'api-status online';
+                } else {
+                    statusElement.textContent = '● Offline';
+                    statusElement.className = 'api-status offline';
+                }
+            } catch (error) {
+                statusElement.textContent = '● Offline';
+                statusElement.className = 'api-status offline';
+            }
+        }
+        
+        checkAPIStatus();
+        
+        // Set default date to today
+        document.getElementById('date').valueAsDate = new Date();
+        
+        // Handle form submission
+        document.getElementById('submissionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results
+            document.getElementById('alert').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Collect form data
+            const submissionData = {
+                date: document.getElementById('date').value,
+                productionFacility: document.getElementById('facility').value,
+                valueChainProcessMain: 'Spinning',
+                valueChainProcessSub: 'Ring Spinning',
+                materialSpecification: document.getElementById('materialSpec').value,
+                mainColorSelected: document.getElementById('color').value,
+                mainColorText: getColorName(document.getElementById('color').value),
+                productionLotBatchNo: document.getElementById('batchNo').value,
+                totalWeightKgs: parseInt(document.getElementById('weight').value),
+                sustainableProcessClaims: true,
+                wetProcessing: false,
+                awareAssetId: `asset-${Date.now()}`,
+                tracerAdded: true,
+                typeOfTracer: 'Aware',
+                materials: [
+                    {
+                        compositionMaterial: document.getElementById('materialType').value,
+                        percentage: 100,
+                        sustainable: true,
+                        sustainabilityClaim: 'Sustainable',
+                        feedstockRecycledMaterials: null
+                    }
+                ],
+                validationMethod: 'SelfValidation',
+                certificates: {
+                    environmental: ['GOTS'],
+                    social: [],
+                    chemical: []
+                }
+            };
+            
+            try {
+                // Send to API using the SDK
+                const response = await sdk.createSubmission(submissionData);
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                
+                // Show success message
+                showAlert('success', `✅ Success! Submission created with ID: ${response.submissionId}`);
+                
+                // Show response
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('resultContent').textContent = JSON.stringify(response, null, 2);
+                
+                // Scroll to result
+                document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                
+                // Show error message
+                showAlert('error', `❌ Error: ${error.message}<br><br>Make sure the API server is running on http://localhost:3000`);
+            }
+        });
+        
+        function showAlert(type, message) {
+            const alertElement = document.getElementById('alert');
+            alertElement.className = `alert ${type}`;
+            alertElement.innerHTML = message;
+            alertElement.style.display = 'block';
+            alertElement.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function getColorName(hex) {
+            const colors = {
+                '#FFA500': 'Orange',
+                '#FF0000': 'Red',
+                '#0000FF': 'Blue',
+                '#00FF00': 'Green',
+                '#FFFF00': 'Yellow',
+                '#800080': 'Purple',
+                '#FFC0CB': 'Pink',
+                '#000000': 'Black',
+                '#FFFFFF': 'White'
+            };
+            return colors[hex.toUpperCase()] || 'Custom Color';
+        }
+    </script>
+</body>
+</html>

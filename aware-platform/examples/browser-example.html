@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aware API Test - Browser</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-top: 0;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .output {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .success {
+      color: #10b981;
+    }
+    .error {
+      color: #ef4444;
+    }
+    .info {
+      color: #3b82f6;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #334155;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .api-url {
+      background: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Aware API Test - Browser</h1>
+    
+    <div class="api-url">
+      API URL: <strong id="apiUrl">http://localhost:3000</strong>
+    </div>
+    
+    <div class="section">
+      <h2>📝 Submissions aanmaken</h2>
+      <button onclick="createBasicSubmission()">Basis Submission</button>
+      <button onclick="createSubmissionWithTracer()">Met Aware Tracer</button>
+      <button onclick="createSelfValidation()">Self-Validation</button>
+    </div>
+    
+    <div class="section">
+      <h2>🔍 Submissions ophalen</h2>
+      <button onclick="getAllSubmissions()">Alle Submissions</button>
+      <button onclick="searchByFacility()">Zoek op Faciliteit</button>
+      <button onclick="searchByTokenType()">Zoek op Token Type</button>
+    </div>
+    
+    <div class="section">
+      <h2>📥 Export</h2>
+      <button onclick="downloadCSV()">Download CSV</button>
+      <button onclick="downloadExcel()">Download Excel</button>
+    </div>
+    
+    <div class="output" id="output">
+Klik op een knop om te starten...
+    </div>
+  </div>
+
+  <script src="../web/aware-sdk.js"></script>
+  <script>
+    const sdk = new AwareSDK('http://localhost:3000');
+    const output = document.getElementById('output');
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      const line = `[${timestamp}] ${message}`;
+      
+      const span = document.createElement('span');
+      span.className = className;
+      span.textContent = line + '\n';
+      
+      output.appendChild(span);
+      output.scrollTop = output.scrollHeight;
+    }
+    
+    function clearOutput() {
+      output.innerHTML = '';
+    }
+    
+    async function createBasicSubmission() {
+      clearOutput();
+      log('📝 Basis submission aanmaken...', 'info');
+      
+      try {
+        const submission = new SubmissionBuilder()
+          .setDate('16/01/2026')
+          .setProductionFacility('Tiancheng Factory')
+          .setValueChainProcess('Spinning', 'Ring Spinning')
+          .setAwareTokenType('Yarn')
+          .setMaterialSpecification('16/1s')
+          .setMainColor('#FFA500', 'Orange')
+          .setProductionLotBatchNo('WEB' + Date.now())
+          .setTotalWeight(5000)
+          .addMaterial({
+            compositionMaterial: 'Cotton',
+            percentage: 100,
+            sustainable: true,
+            sustainabilityClaim: 'Recycled',
+            feedstockRecycledMaterials: 'PostConsumer'
+          })
+          .setValidationMethod('SelfValidation')
+          .build();
+        
+        const result = await sdk.createSubmission(submission);
+        log('✅ Submission aangemaakt!', 'success');
+        log(`📋 ID: ${result.submissionId}`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function createSubmissionWithTracer() {
+      clearOutput();
+      log('🔬 Submission met tracer aanmaken...', 'info');
+      
+      try {
+        const submission = new SubmissionBuilder()
+          .setDate('16/01/2026')
+          .setProductionFacility('Tiancheng Factory')
+          .setValueChainProcess('Spinning', 'Ring Spinning')
+          .setAwareTokenType('Yarn')
+          .setMaterialSpecification('16/1s')
+          .setMainColor('#87CEEB', 'Light Blue')
+          .setProductionLotBatchNo('WEB-TR' + Date.now())
+          .setTotalWeight(7500)
+          .addMaterial({
+            compositionMaterial: 'Cotton',
+            percentage: 100,
+            sustainable: true,
+            sustainabilityClaim: 'Recycled',
+            feedstockRecycledMaterials: 'PostConsumer'
+          })
+          .setTracerAdded(true)
+          .setAwareTracer('15/11/2022', 'uploads/tracer-report.pdf')
+          .setValidationMethod('GuanXu')
+          .build();
+        
+        const result = await sdk.createSubmission(submission);
+        log('✅ Submission met tracer aangemaakt!', 'success');
+        log(`📋 ID: ${result.submissionId}`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function createSelfValidation() {
+      clearOutput();
+      log('📋 Self-validation submission aanmaken...', 'info');
+      
+      try {
+        const submission = new SubmissionBuilder()
+          .setDate('16/01/2026')
+          .setProductionFacility('Tiancheng Factory')
+          .setValueChainProcess('Spinning', 'Ring Spinning')
+          .setAwareTokenType('Yarn')
+          .setMaterialSpecification('16/1s')
+          .setMainColor('#90EE90', 'Light Green')
+          .setProductionLotBatchNo('WEB-SV' + Date.now())
+          .setTotalWeight(6000)
+          .addMaterial({
+            compositionMaterial: 'Cotton',
+            percentage: 100,
+            sustainable: true,
+            sustainabilityClaim: 'Recycled',
+            feedstockRecycledMaterials: 'PostConsumer'
+          })
+          .setSelfValidation({
+            sources: [{
+              kgs: 6500,
+              feedstockType: 'Cotton Waste',
+              feedstockSourceType: 'Textile Recycler',
+              sourceName: 'GreenRecycle Ltd.',
+              sourceInvoiceNo: 'INV' + Date.now(),
+              sourceInvoiceDate: '10/01/2026'
+            }],
+            totalSourceInput: 6500
+          })
+          .build();
+        
+        const result = await sdk.createSubmission(submission);
+        log('✅ Self-validation submission aangemaakt!', 'success');
+        log(`📋 ID: ${result.submissionId}`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function getAllSubmissions() {
+      clearOutput();
+      log('🔍 Alle submissions ophalen...', 'info');
+      
+      try {
+        const result = await sdk.getAllSubmissions();
+        log(`✅ ${result.count} submissions gevonden`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function searchByFacility() {
+      clearOutput();
+      log('🔍 Zoeken op faciliteit...', 'info');
+      
+      try {
+        const result = await sdk.searchSubmissions({
+          'Production Facility': 'Tiancheng Factory'
+        });
+        log(`✅ ${result.count} submissions gevonden`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    async function searchByTokenType() {
+      clearOutput();
+      log('🔍 Zoeken op token type...', 'info');
+      
+      try {
+        const result = await sdk.searchSubmissions({
+          'Aware Token Type': 'Yarn'
+        });
+        log(`✅ ${result.count} submissions gevonden`, 'success');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+    
+    function downloadCSV() {
+      clearOutput();
+      log('📥 CSV downloaden...', 'info');
+      const url = sdk.getCSVExportURL();
+      log(`Openen: ${url}`, 'info');
+      window.open(url, '_blank');
+    }
+    
+    function downloadExcel() {
+      clearOutput();
+      log('📥 Excel downloaden...', 'info');
+      const url = sdk.getExcelExportURL();
+      log(`Openen: ${url}`, 'info');
+      window.open(url, '_blank');
+    }
+    
+    // Initial log
+    log('✨ Aware API SDK geladen en klaar voor gebruik!', 'success');
+  </script>
+</body>
+</html>

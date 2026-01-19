@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Hardhat files
+cache/
+artifacts/
+
+# Deployment artifacts (bevat lokale adressen)
+deployment.json
+SupplyChain.abi.json
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Backup files
+*-old.html
+*-old.js
+*-with-excel.js

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aware™ Blockchain Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="aware-style.css">
+  <script src="batches.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
+        AWARE™
+      </div>
+      <div class="nav">
+        <a href="index.html" class="active">Home</a>
+        <a href="create_token.html">Create Token</a>
+        <a href="update_token.html">Manage Batches</a>
+      </div>
+      <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
+        <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
+          Logged in as: <strong id="username-display">-</strong>
+        </div>
+        <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
+          Role: <strong id="role-display">-</strong>
+        </div>
+        <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Top Header -->
+      <header class="topbar">
+        <h1>AWARE™ Blockchain Platform</h1>
+        <p>All batches are stored on the blockchain for complete transparency and traceability.</p>
+      </header>
+
+      <!-- Content Area -->
+      <section class="content">
+        <div class="shell">
+          <!-- All Batches Section -->
+          <div class="card--page" style="margin-bottom: 30px;">
+            <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">📦 All Blockchain Batches</h3>
+            
+            <div class="filter-bar">
+              <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID, Material, Supplier..." oninput="filterDisplayedBatches()">
+              <select id="statusFilter" onchange="filterDisplayedBatches()">
+                <option value="">All Statuses</option>
+                <option value="0">Pending</option>
+                <option value="1">Approved</option>
+                <option value="2">Rejected</option>
+                <option value="3">Certified</option>
+              </select>
+              <button class="btn-primary" onclick="loadBatchesFromBlockchain()">🔄 Refresh</button>
+            </div>
+
+            <div id="loading-message" style="text-align: center; padding: 40px; color: var(--muted);">
+              Loading batches from blockchain...
+            </div>
+
+            <div id="batches-container" style="display: none;">
+              <div style="overflow-x: auto; margin-top: 15px;">
+                <table class="batch-table" id="batchTable">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Asset ID</th>
+                      <th>Material</th>
+                      <th>Weight</th>
+                      <th>Supplier</th>
+                      <th>Country</th>
+                      <th>Created By</th>
+                      <th>Created</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batchTableBody">
+                  </tbody>
+                </table>
+              </div>
+              <div id="pagination"></div>
+            </div>
+
+            <div id="no-batches" style="display: none; text-align: center; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+              <h3 style="margin-bottom: 8px;">No batches found</h3>
+              <p style="color: var(--muted); margin-bottom: 20px;">Be the first to create a batch on the blockchain!</p>
+              <a href="create_token.html" class="btn-primary">Create First Batch</a>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">Quick Actions</h3>
+          <div class="cards">
+            <a class="card create" href="create_token.html">
+              <div class="badge">＋</div>
+              <div>
+                <h2>Create Batch</h2>
+                <p>Create new batches on the blockchain with complete traceability data.</p>
+                <div class="cta">Create New Batch <span aria-hidden="true">→</span></div>
+              </div>
+            </a>
+
+            <a class="card create" href="batch_approve.html">
+              <div class="badge">✓</div>
+              <div>
+                <h2>Approve Batches</h2>
+                <p>Review and approve pending batches or certify approved ones.</p>
+                <div class="cta">Review Batches <span aria-hidden="true">→</span></div>
+              </div>
+            </a>
+          </div>
+
+          <div class="hint">
+            <strong>Tip:</strong> All data is stored on the Hardhat blockchain. Changes are permanent and transparent.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Batch Details Modal -->
+  <div id="batchModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeBatchModal(event)">
+    <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: var(--r-lg); padding: 30px; position: relative;" onclick="event.stopPropagation()">
+      <button onclick="closeBatchModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);">&times;</button>
+      
+      <div id="batchModalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let allBatches = [];
+    let filteredBatches = [];
+    let currentPage = 1;
+    const batchesPerPage = 10;
+
+    // Check authentication on page load
+    window.addEventListener('load', async () => {
+      await checkAuthentication();
+      await loadBatchesFromBlockchain();
+    });
+
+    async function checkAuthentication() {
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (!data.loggedIn) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        currentUser = data.user;
+        document.getElementById('username-display').textContent = currentUser.username;
+        document.getElementById('role-display').textContent = ROLE_LABELS[currentUser.role] || 'Unknown';
+      } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = 'login.html';
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = 'login.html';
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    async function loadBatchesFromBlockchain() {
+      try {
+        document.getElementById('loading-message').style.display = 'block';
+        document.getElementById('batches-container').style.display = 'none';
+        document.getElementById('no-batches').style.display = 'none';
+
+        allBatches = await fetchBatches();
+        filteredBatches = [...allBatches];
+
+        document.getElementById('loading-message').style.display = 'none';
+
+        if (allBatches.length === 0) {
+          document.getElementById('no-batches').style.display = 'block';
+        } else {
+          document.getElementById('batches-container').style.display = 'block';
+          displayPage();
+        }
+      } catch (error) {
+        console.error('Error loading batches:', error);
+        document.getElementById('loading-message').innerHTML = `
+          <div style="color: #f44336;">
+            Error loading batches. Please make sure the blockchain is running and refresh the page.
+          </div>
+        `;
+      }
+    }
+
+    function filterDisplayedBatches() {
+      const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      filteredBatches = allBatches.filter(batch => {
+        const matchesSearch = !searchTerm || (
+          batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
+          batch.physicalAsset.material?.toLowerCase().includes(searchTerm) ||
+          batch.physicalAsset.batchNumber?.toLowerCase().includes(searchTerm) ||
+          batch.tracer.supplier?.toLowerCase().includes(searchTerm) ||
+          batch.tracer.country?.toLowerCase().includes(searchTerm)
+        );
+
+        const matchesStatus = !statusFilter || batch.status === parseInt(statusFilter);
+
+        return matchesSearch && matchesStatus;
+      });
+
+      currentPage = 1;
+      displayPage();
+    }
+
+    function displayPage() {
+      const tbody = document.getElementById('batchTableBody');
+      tbody.innerHTML = '';
+
+      const startIndex = (currentPage - 1) * batchesPerPage;
+      const endIndex = startIndex + batchesPerPage;
+      const batchesToShow = filteredBatches.slice(startIndex, endIndex);
+
+      if (batchesToShow.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align: center; padding: 40px; color: var(--muted);">
+              No batches match your search criteria.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      batchesToShow.forEach((batch) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${batch.id}</td>
+          <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${batch.physicalAsset.assetId}">
+            ${batch.physicalAsset.assetId || 'N/A'}
+          </td>
+          <td>${batch.physicalAsset.material || 'N/A'}</td>
+          <td>${batch.physicalAsset.weight || 'N/A'}</td>
+          <td>${batch.tracer.supplier || 'N/A'}</td>
+          <td>${batch.tracer.country || 'N/A'}</td>
+          <td>${batch.createdByName || 'Unknown'}</td>
+          <td>${formatDate(batch.createdAt)}</td>
+          <td>${getStatusBadge(batch.status)}</td>
+          <td>
+            <button class="select-btn" onclick="viewBatchDetails(${batch.id})">View</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      updatePagination();
+    }
+
+    function updatePagination() {
+      const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
+      const paginationDiv = document.getElementById('pagination');
+      
+      if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+      }
+
+      let paginationHTML = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">';
+      
+      paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} style="${currentPage === 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">← Previous</button>`;
+      
+      paginationHTML += '<div style="display: flex; gap: 5px;">';
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="changePage(${i})" style="min-width: 40px;">${i}</button>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          paginationHTML += '<span style="padding: 0 5px;">...</span>';
+        }
+      }
+      paginationHTML += '</div>';
+      
+      paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} style="${currentPage === totalPages ? 'opacity: 0.5; cursor: not-allowed;' : ''}">Next →</button>`;
+      
+      paginationHTML += '</div>';
+      paginationDiv.innerHTML = paginationHTML;
+    }
+
+    function changePage(page) {
+      const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      displayPage();
+    }
+
+    function viewBatchDetails(batchId) {
+      const batch = allBatches.find(b => b.id === batchId);
+      if (!batch) return;
+
+      const content = `
+        <h2 style="margin-bottom: 24px;">Batch #${batch.id} Details</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+          <!-- Physical Asset -->
+          <div class="card" style="padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📦 Physical Asset</h3>
+            <div style="font-size: 13px;">
+              <div style="margin-bottom: 8px;"><strong>Asset ID:</strong> ${batch.physicalAsset.assetId || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Material:</strong> ${batch.physicalAsset.material || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Composition:</strong> ${batch.physicalAsset.composition || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Weight:</strong> ${batch.physicalAsset.weight || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Batch Number:</strong> ${batch.physicalAsset.batchNumber || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Production Date:</strong> ${batch.physicalAsset.productionDate || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Expiry Date:</strong> ${batch.physicalAsset.expiryDate || 'N/A'}</div>
+            </div>
+          </div>
+
+          <!-- Tracer -->
+          <div class="card" style="padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
+            <div style="font-size: 13px;">
+              <div style="margin-bottom: 8px;"><strong>Supplier:</strong> ${batch.tracer.supplier || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Farm Location:</strong> ${batch.tracer.farmLocation || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Country:</strong> ${batch.tracer.country || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>GPS Coordinates:</strong> ${batch.tracer.gpsCoordinates || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Certifications:</strong> ${batch.tracer.certifications || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Harvest Date:</strong> ${batch.tracer.harvestDate || 'N/A'}</div>
+            </div>
+          </div>
+
+          <!-- Validation -->
+          <div class="card" style="padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">✓ Validation</h3>
+            <div style="font-size: 13px;">
+              <div style="margin-bottom: 8px;"><strong>Quality Grade:</strong> ${batch.validation.qualityGrade || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Moisture Content:</strong> ${batch.validation.moistureContent || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Contamination:</strong> ${batch.validation.contamination || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Inspection Date:</strong> ${batch.validation.inspectionDate || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Inspector:</strong> ${batch.validation.inspector || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Lab Results:</strong> ${batch.validation.labResults || 'N/A'}</div>
+            </div>
+          </div>
+
+          <!-- Compliance -->
+          <div class="card" style="padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📋 Compliance</h3>
+            <div style="font-size: 13px;">
+              <div style="margin-bottom: 8px;"><strong>Regulatory Standards:</strong> ${batch.compliance.regulatoryStandards || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Sustainability Cert:</strong> ${batch.compliance.sustainabilityCert || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Fair Trade Cert:</strong> ${batch.compliance.fairTradeCert || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Organic Cert:</strong> ${batch.compliance.organicCert || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Carbon Footprint:</strong> ${batch.compliance.carbonFootprint || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>Water Usage:</strong> ${batch.compliance.waterUsage || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Information -->
+        <div class="card" style="padding: 20px; margin-top: 20px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">ℹ️ Batch Status</h3>
+          <div style="font-size: 13px;">
+            <div style="margin-bottom: 8px;"><strong>Status:</strong> ${getStatusBadge(batch.status)}</div>
+            <div style="margin-bottom: 8px;"><strong>Created By:</strong> ${batch.createdByName} (${ROLE_LABELS[batch.createdByRole]})</div>
+            <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateTime(batch.createdAt)}</div>
+            ${batch.approvedByName ? `<div style="margin-bottom: 8px;"><strong>Approved By:</strong> ${batch.approvedByName}</div>` : ''}
+            ${batch.approvedAt > 0 ? `<div style="margin-bottom: 8px;"><strong>Approved:</strong> ${formatDateTime(batch.approvedAt)}</div>` : ''}
+            ${batch.rejectionReason ? `<div style="margin-bottom: 8px;"><strong>Rejection Reason:</strong> ${batch.rejectionReason}</div>` : ''}
+            ${batch.certifiedByName ? `<div style="margin-bottom: 8px;"><strong>Certified By:</strong> ${batch.certifiedByName}</div>` : ''}
+            ${batch.certifiedAt > 0 ? `<div style="margin-bottom: 8px;"><strong>Certified:</strong> ${formatDateTime(batch.certifiedAt)}</div>` : ''}
+            ${batch.certificationHash ? `<div style="margin-bottom: 8px;"><strong>Certification Hash:</strong> <code style="font-size: 11px;">${batch.certificationHash}</code></div>` : ''}
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <button onclick="closeBatchModal()" class="btn-secondary">Close</button>
+        </div>
+      `;
+
+      document.getElementById('batchModalContent').innerHTML = content;
+      document.getElementById('batchModal').style.display = 'block';
+    }
+
+    function closeBatchModal(event) {
+      if (!event || event.target.id === 'batchModal') {
+        document.getElementById('batchModal').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

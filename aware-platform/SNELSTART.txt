@@ -1,0 +1,70 @@
+# SNELSTART AWARE™ PLATFORM
+
+## Stap 1: Installeer Dependencies
+Open een terminal in de aware-platform map en run:
+```
+npm install
+```
+
+## Stap 2: Start Ollama
+In een aparte terminal:
+```
+ollama serve
+```
+
+Als je het llama3.2:3b model nog niet hebt:
+```
+ollama pull llama3.2:3b
+```
+
+## Stap 3: Start de Server
+In de terminal in aware-platform:
+```
+npm start
+```
+
+Je zou moeten zien:
+```
+🚀 Aware™ Platform running on http://localhost:3000
+📊 Excel opslag: [pad naar Excel bestand]
+🤖 Ollama AI: http://localhost:11434
+```
+
+## Stap 4: Open de Applicatie
+Open je browser en ga naar:
+```
+http://localhost:3000
+```
+
+## Klaar!
+
+Je kunt nu:
+- ✅ Tokens maken met AI-ondersteuning
+- ✅ Data opslaan naar Excel
+- ✅ Tokens updaten
+- ✅ Data exporteren
+
+## Problemen?
+
+### Ollama draait niet
+```
+# Start Ollama
+ollama serve
+
+# Test of het werkt
+ollama list
+```
+
+### Server start niet
+- Controleer of poort 3000 vrij is
+- Controleer of alle dependencies geïnstalleerd zijn: `npm install`
+
+### AI voorspelling werkt niet
+- Controleer of Ollama draait: `ollama serve`
+- Controleer of het model geïnstalleerd is: `ollama list`
+- Installeer het model: `ollama pull llama3.2:3b`
+
+### Data wordt niet opgeslagen
+- Controleer de browser console (F12) voor fouten
+- Controleer of de server draait
+- Controleer of alle verplichte velden ingevuld zijn

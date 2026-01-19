@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aware™ Token Creator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="aware-style.css">
+    <script src="batches.js"></script>
+    <script src="aware-sdk.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
+                AWARE™
+            </div>
+            <div class="nav">
+                <a href="index.html">Home</a>
+                <a href="create_token.html" class="active">Create Token</a>
+                <a href="update_token.html">Manage Batches</a>
+            </div>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
+                    Logged in as: <strong id="username-display">-</strong>
+                </div>
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
+                    Role: <strong id="role-display">-</strong>
+                </div>
+                <button onclick="logout()" class="btn" style="width: 100%; background: rgba(255,51,0,.1); color: #FF3300; border: 1px solid #FF3300;">
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="topbar-inner">
+                    <div class="page-head">
+                        <div>
+                            <h1>Create Token</h1>
+                            <p>Create new Aware™ tokens for your sustainable materials with AI support.</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="content">
+                <div class="shell">
+                    <div class="card--page">
+                        <!-- Guide Section -->
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text);">📖 Guide</h3>
+                            <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text);">Follow these steps to create a new token</h4>
+                            <div class="info-box" style="background: #fff3e0; border-left: 4px solid #FF3300;">
+                                <strong>1.</strong> Select a previous batch that is similar to your new batch (optional - for AI prediction)<br>
+                                <strong>2.</strong> Describe what's different from the previous batch<br>
+                                <strong>3.</strong> Click "Predict with AI" to auto-fill the form, or "Continue without AI" to start with blank fields<br>
+                                <strong>4.</strong> Review and fill in the data through the 5 sections<br>
+                                <strong>5.</strong> Submit to create your new tokens
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">
+                                <span class="step-number">1</span>
+                                Select previous batch for AI prediction
+                            </div>
+                            <label>Choose a previously delivered batch:</label>
+
+                <div class="filter-bar">
+                    <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..."
+                        oninput="filterBatches()">
+                    <select id="compositionFilter" onchange="filterBatches()">
+                        <option value="">Filter by Composition</option>
+                        <option value="Organic Silk">Organic Silk</option>
+                        <option value="Recycled Cotton">Recycled Cotton</option>
+                        <option value="Conventional Cotton">Conventional Cotton</option>
+                        <option value="Regenerative Cotton">Regenerative Cotton</option>
+                        <option value="Organic Cotton">Organic Cotton</option>
+                        <option value="Recycled Polyester">Recycled Polyester</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterBatches()">
+                        <option value="">Filter by Status</option>
+                        <option value="CONCEPT">CONCEPT</option>
+                        <option value="SENT">SENT</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table class="batch-table" id="batchTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Color</th>
+                                <th>Asset ID</th>
+                                <th>Weight Kgs</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="batchPagination"></div>
+
+                <div class="selected-batch-display" id="selectedBatchDisplay">
+                    <h4>Selected batch:</h4>
+                    <div class="batch-info" id="selectedBatchInfo"></div>
+                </div>
+
+                <div class="info-box">
+                    💡 <strong>Tip:</strong> Select the batch that most closely resembles your new batch. This helps
+                    predict what data is needed.
+                </div>
+                        </div>
+
+                        <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    What's different?
+                </div>
+                <label for="changes">Describe the differences from the previous batch:</label>
+                <textarea id="changes"
+                    placeholder="Example: We now use 60% organic cotton and 40% recycled cotton. Total weight is 5000 kg. The color is now navy blue. New supplier: Cotton World from India. Added tracer..."></textarea>
+                <div class="info-box">
+                    📝 Mention all changes: composition %, colors, weight, suppliers, locations, certificates, tracer,
+                    etc.
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" onclick="predictWithAI()">🤖 Predict with AI (Local Ollama)</button>
+                <button class="btn btn-secondary" onclick="continueWithoutAI()">Continue without AI</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AI is analyzing your changes and filling in the data...</p>
+            </div>
+
+            <div class="predicted-data" id="predictedData">
+                <h3>✨ Predicted data - Check and correct if needed</h3>
+
+                <!-- Progress Bar -->
+                <div class="progress-bar">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Physical Asset</div>
+                    </div>
+                    <div class="step-arrow">→</div>
+
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Tracer</div>
+                    </div>
+                    <div class="step-arrow">→</div>
+
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Validation</div>
+                    </div>
+                    <div class="step-arrow">→</div>
+
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Compliances</div>
+                    </div>
+                    <div class="step-arrow">→</div>
+
+                    <div class="step" data-step="5">
+                        <div class="step-number">5</div>
+                        <div class="step-label">DPP</div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Physical Asset -->
+                <div class="section active" id="section1">
+                    <div class="field-label">1. Physical Asset</div>
+                    <div class="field-value">
+                        <label>Date:</label>
+                        <input type="date" id="assetDate">
+
+                        <label style="margin-top: 15px;">Production Facility *:</label>
+                        <select id="productionFacility">
+                            <option value="">--Select from Producer Geo Locations--</option>
+                        </select>
+
+                        <label style="margin-top: 15px;">Value Chain Process (Main) *:</label>
+                        <select id="valueChainMain">
+                            <option value="">--Select Value Chain Process (Main)--</option>
+                        </select>
+
+                        <label style="margin-top: 15px;">Value Chain Process (Sub) *:</label>
+                        <select id="valueChainSub">
+                            <option value="">--Select Value Chain Process (Sub)--</option>
+                        </select>
+
+                        <label style="margin-top: 15px;">Aware™ Token Type:</label>
+                        <input type="text" id="tokenType" placeholder="e.g., Yarn">
+
+                        <label style="margin-top: 15px;">Material Specification *:</label>
+                        <input type="text" id="materialSpec" placeholder="e.g., 16/1s">
+
+                        <label style="margin-top: 15px;">Select Main Color *:</label>
+                        <input type="color" id="selectMainColor" style="height: 40px; cursor: pointer;" onchange="updateColorName(this.value)">
+
+                        <label style="margin-top: 15px;">Main Color *:</label>
+                        <input type="text" id="mainColor" placeholder="e.g., Orange">
+
+                        <label style="margin-top: 15px;">Production Lot/ Batch No. *:</label>
+                        <input type="text" id="batchNo" placeholder="e.g., 77839H8873">
+
+                        <label style="margin-top: 15px;">Composition *:</label>
+                        <div id="compositionList"></div>
+                        <button class="add-btn" onclick="addComposition()">+ Add Composition</button>
+
+                        <label style="margin-top: 15px;">Total Weight of the Products in Kgs(#Tokens) *:</label>
+                        <input type="number" id="totalWeight" placeholder="e.g., 8500">
+
+                        <label style="margin-top: 15px;">Sustainable Process Claims:</label>
+                        <div class="sustainability-toggle">
+                            <span>No</span>
+                            <div class="toggle-switch" id="sustainableClaimsToggle" onclick="toggleSustainableClaims()">
+                            </div>
+                            <span>Yes</span>
+                        </div>
+                        <div id="sustainableClaimsContent" style="display: none; margin-top: 10px;">
+                            <input type="text" id="sustainableClaims" placeholder="e.g., Sustainable claim details">
+                        </div>
+
+                        <label style="margin-top: 15px;">Wet Processing:</label>
+                        <div class="sustainability-toggle">
+                            <span>No</span>
+                            <div class="toggle-switch" id="wetProcessingToggle" onclick="toggleWetProcessing()"></div>
+                            <span>Yes</span>
+                        </div>
+                        <div id="wetProcessingContent" style="display: none; margin-top: 10px;">
+                            <select id="wetProcessingSelect">
+                                <option value="">--Select Wet Processing--</option>
+                                <option value="dyeing">Dyeing</option>
+                                <option value="washing">Washing</option>
+                                <option value="printing">Printing</option>
+                                <option value="finishing">Finishing</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <div></div>
+                        <button class="btn btn-primary" onclick="nextPredictedSection(2)">Save & Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 2: Tracer -->
+                <div class="section" id="section2">
+                    <div class="field-label">2. Tracer</div>
+                    <div class="field-value">
+                        <label>Aware™ Asset ID:</label>
+                        <input type="text" id="assetId"
+                            placeholder="e.g., tiancheng - Yarn - 16/1s - 100% Organic Silk - Orange - 23443242342"
+                            readonly>
+
+                        <label style="margin-top: 15px;">Tracer added:</label>
+                        <div class="sustainability-toggle">
+                            <span>No</span>
+                            <div class="toggle-switch" id="tracerAddedToggle" onclick="toggleTracerAdded()"></div>
+                            <span>Yes</span>
+                        </div>
+
+                        <div id="tracerTypeSection" style="display: none; margin-top: 15px;">
+                            <label>Type of Tracer *:</label>
+                            <div style="margin-top: 10px;">
+                                <label><input type="radio" name="tracerType" value="aware"
+                                        onchange="updateTracerFields()">
+                                    Aware™</label>
+                                <label style="margin-left: 20px;"><input type="radio" name="tracerType" value="custom"
+                                        onchange="updateTracerFields()"> Custom</label>
+                            </div>
+
+                            <div id="tracerDetails" style="margin-top: 15px;"></div>
+                        </div>
+
+                        <div
+                            style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-radius: 8px; font-size: 13px;">
+                            We confirm that the Aware™ tracer has been added to this asset during production, and that
+                            the Aware™ tracer is detectable in the same asset after production. We performed positive
+                            scans with the Aware™ spectrometer on the mentioned date, according to the Aware™ sampling
+                            plan of complete batch / lot.
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="prevPredictedSection(1)">← Previous</button>
+                        <button class="btn btn-primary" onclick="nextPredictedSection(3)">Save & Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 3: Validation -->
+                <div class="section" id="section3">
+                    <div class="field-label">3. Validation</div>
+                    <div class="field-value">
+                        <label>List of Materials:</label>
+                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            <small>Material | Claim | Weight kgs | Color | Feedstock Origin</small>
+                        </div>
+
+                        <label style="margin-top: 15px;">Validation:</label>
+                        <p style="font-size: 13px; color: #666;">Choose how you want to validate this material</p>
+
+                        <label style="margin-top: 15px;"><strong>Self - Validation</strong></label>
+                        <button class="add-btn" onclick="addSelfValidation()">Add Self Validation</button>
+                        <div id="selfValidationList"></div>
+
+                        <label style="margin-top: 15px;"><strong>Guan Xu First Mile Traceability
+                                Platform</strong></label>
+                        <button class="add-btn" onclick="addGuanXu()">Upload Guan Xu Documentation</button>
+                        <div id="guanXuList"></div>
+
+                        <label style="margin-top: 15px;"><strong>STCP First Mile Traceability Platform</strong></label>
+                        <button class="add-btn" onclick="addSTCP()">Upload STCP Documentation</button>
+                        <div id="stcpList"></div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="prevPredictedSection(2)">← Previous</button>
+                        <button class="btn btn-primary" onclick="nextPredictedSection(4)">Save & Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 4: Company Compliances -->
+                <div class="section" id="section4">
+                    <div class="field-label">4. Company Compliances</div>
+                    <div class="field-value">
+                        <label><strong>Environmental Scope Certificates</strong></label>
+                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            <small>Certification Name | Description | Status | Valid Thru Date</small>
+                            <p style="margin-top: 5px; font-size: 13px;">Example: GRS | GRS | VERIFIED | 31/08/2026</p>
+                        </div>
+
+                        <label style="margin-top: 15px;"><strong>Social Compliance Certificates</strong></label>
+                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            <small>Certification Name | Description | Status | Valid Thru Date</small>
+                            <p style="margin-top: 5px; font-size: 13px;">Example: FairWear | Social Cer... | VERIFIED |
+                                01/06/2027</p>
+                        </div>
+
+                        <label style="margin-top: 15px;"><strong>Chemical Compliance Certificates</strong></label>
+                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                            <small>Certification Name | Description | Status | Valid Thru Date</small>
+                            <p style="margin-top: 5px; font-size: 13px;">No Data Available</p>
+                        </div>
+
+                        <div id="compliancesList" style="margin-top: 15px;"></div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="prevPredictedSection(3)">← Previous</button>
+                        <button class="btn btn-primary" onclick="nextPredictedSection(5)">Save & Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 5: DPP -->
+                <div class="section" id="section5">
+                    <div class="field-label">5. DPP (Digital Product Passport)</div>
+                    <div class="field-value">
+                        <div style="padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                            <h4>DPP Summary</h4>
+                            <p style="margin-top: 10px;"><strong>Aware™ Token Type:</strong> <span
+                                    id="dppTokenType">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Aware™ Asset ID:</strong> <span
+                                    id="dppAssetId">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Material Composition:</strong> <span
+                                    id="dppComposition">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Color:</strong> <span id="dppColor">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Quantity:</strong> <span id="dppQuantity">-</span> kgs
+                            </p>
+                            <p style="margin-top: 10px;"><strong>Producer:</strong> Wenzhou TIANCHENG Textile Co., Ltd.
+                            </p>
+                            <p style="margin-top: 10px;"><strong>Production Location:</strong> <span
+                                    id="dppLocation">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Value Chain Process(Main):</strong> <span
+                                    id="dppVCMain">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Value Chain Process(Sub):</strong> <span
+                                    id="dppVCSub">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Tracer:</strong> <span id="dppTracer">-</span></p>
+                            <p style="margin-top: 10px;"><strong>Certificates:</strong> <span
+                                    id="dppCertificates">-</span></p>
+                            <p style="margin-top: 15px; font-size: 18px; font-weight: bold; color: #667eea;"><span
+                                    id="dppTokenCount">0</span> Aware™ Tokens</p>
+                            <p style="margin-top: 5px;"><strong>Status:</strong> <span id="dppStatus">Requested</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="prevPredictedSection(4)">← Previous</button>
+                        <button class="btn btn-primary" onclick="submitData()">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                ✅ <strong>Success!</strong> Your tokens have been successfully created. 1 kg material = 1 token.
+            </div>
+        </div>
+    </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentData = null;
+        let allBatches = [];
+        let filteredBatches = [];
+        let currentPage = 1;
+        const batchesPerPage = 8;
+
+        // Check authentication on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            console.log('DOM loaded, checking authentication...');
+            try {
+                const response = await fetch('/api/auth/session');
+                const data = await response.json();
+                
+                console.log('Session response:', data);
+                
+                if (!data.loggedIn) {
+                    console.log('Not logged in, redirecting...');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Show user info in sidebar
+                const usernameEl = document.getElementById('username-display');
+                const roleEl = document.getElementById('role-display');
+                
+                console.log('Username element:', usernameEl);
+                console.log('Role element:', roleEl);
+                
+                if (usernameEl) {
+                    usernameEl.textContent = data.user.username;
+                    console.log('Set username to:', data.user.username);
+                }
+                
+                if (roleEl) {
+                    const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
+                    roleEl.textContent = roles[data.user.role] || 'Unknown';
+                    console.log('Set role to:', roles[data.user.role]);
+                }
+                
+                console.log('User logged in:', data.user);
+            } catch (error) {
+                console.error('Session check failed:', error);
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Initialize batches array (disabled - using blockchain now)
+        function initBatches() {
+            // No longer needed - batches are on blockchain
+            // allBatches = [];
+            // filteredBatches = [];
+        }
+
+        // Display batches in table with pagination (disabled - using blockchain now)
+        function displayBatches(batches) {
+            // No longer needed - batches are on blockchain via index.html
+        }
+
+        function updatePagination(totalBatches) {
+            const totalPages = Math.ceil(totalBatches / batchesPerPage);
+            const paginationDiv = document.getElementById('batchPagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">';
+            
+            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} style="${currentPage === 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">← Previous</button>`;
+            
+            paginationHTML += '<div style="display: flex; gap: 5px;">';
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="changePage(${i})" style="min-width: 40px;">${i}</button>`;
+            }
+            paginationHTML += '</div>';
+            
+            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} style="${currentPage === totalPages ? 'opacity: 0.5; cursor: not-allowed;' : ''}">Next →</button>`;
+            
+            paginationHTML += '</div>';
+            paginationDiv.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            displayBatches(filteredBatches);
+        }
+
+        // Color conversion functions
+        function hexToColorName(hex) {
+            const colorMap = {
+                '#FF0000': 'Red', '#FF3300': 'Scarlet', '#FF6600': 'Orange Red', '#FF9900': 'Dark Orange',
+                '#FFCC00': 'Orange', '#FFFF00': 'Yellow', '#CCFF00': 'Yellow Green', '#99FF00': 'Lime',
+                '#66FF00': 'Bright Green', '#33FF00': 'Green', '#00FF00': 'Pure Green', '#00FF33': 'Spring Green',
+                '#00FF66': 'Sea Green', '#00FF99': 'Aquamarine', '#00FFCC': 'Turquoise', '#00FFFF': 'Cyan',
+                '#00CCFF': 'Sky Blue', '#0099FF': 'Azure', '#0066FF': 'Blue', '#0033FF': 'Royal Blue',
+                '#0000FF': 'Pure Blue', '#3300FF': 'Indigo', '#6600FF': 'Purple', '#9900FF': 'Violet',
+                '#CC00FF': 'Magenta', '#FF00FF': 'Fuchsia', '#FF00CC': 'Pink Magenta', '#FF0099': 'Hot Pink',
+                '#FF0066': 'Deep Pink', '#FF0033': 'Pink Red', '#FFA500': 'Orange', '#FFD580': 'Light Orange',
+                '#ADD8E6': 'Light Blue', '#FFFFE0': 'Light Yellow', '#800080': 'Purple', '#F5F5DC': 'Natural',
+                '#FFFFFF': 'White', '#000000': 'Black', '#808080': 'Gray', '#C0C0C0': 'Silver',
+                '#800000': 'Maroon', '#008000': 'Green', '#000080': 'Navy', '#808000': 'Olive'
+            };
+            
+            const upperHex = hex.toUpperCase();
+            if (colorMap[upperHex]) return colorMap[upperHex];
+            
+            // Convert hex to RGB
+            const r = parseInt(hex.substr(1,2), 16);
+            const g = parseInt(hex.substr(3,2), 16);
+            const b = parseInt(hex.substr(5,2), 16);
+            
+            // Determine color based on RGB values
+            if (r > 200 && g > 200 && b > 200) return 'Light ' + ((r > g && r > b) ? 'Pink' : (g > r && g > b) ? 'Green' : 'Blue');
+            if (r < 50 && g < 50 && b < 50) return 'Dark ' + ((r > g && r > b) ? 'Red' : (g > r && g > b) ? 'Green' : 'Blue');
+            
+            if (r > g && r > b) return (r > 200) ? 'Light Red' : (r > 128) ? 'Red' : 'Dark Red';
+            if (g > r && g > b) return (g > 200) ? 'Light Green' : (g > 128) ? 'Green' : 'Dark Green';
+            if (b > r && b > g) return (b > 200) ? 'Light Blue' : (b > 128) ? 'Blue' : 'Dark Blue';
+            if (r > 128 && g > 128 && b < 100) return 'Yellow';
+            if (r > 128 && b > 128 && g < 100) return 'Purple';
+            if (g > 128 && b > 128 && r < 100) return 'Cyan';
+            
+            return hex;
+        }
+        
+        function updateColorName(hexValue) {
+            const mainColorInput = document.getElementById('mainColor');
+            if (mainColorInput) {
+                mainColorInput.value = hexToColorName(hexValue);
+            }
+        }
+
+        // Filter batches
+        function filterBatches() {
+            const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
+            const compositionFilter = document.getElementById('compositionFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = allBatches.filter(batch => {
+                const matchesSearch = batch.assetId.toLowerCase().includes(searchTerm);
+                const matchesComposition = !compositionFilter || batch.assetId.includes(compositionFilter);
+                const matchesStatus = !statusFilter || batch.status === statusFilter;
+
+                return matchesSearch && matchesComposition && matchesStatus;
+            });
+
+            currentPage = 1;
+            displayBatches(filtered);
+        }
+
+        // Select a batch
+        function selectBatch(batchId) {
+            currentData = JSON.parse(JSON.stringify(batchData[batchId]));
+            const batch = batchData[batchId];
+
+            // Display selected batch info
+            const display = document.getElementById('selectedBatchDisplay');
+            const info = document.getElementById('selectedBatchInfo');
+
+            info.innerHTML = `
+                <strong>Date:</strong> ${batch.date}<br>
+                <strong>Type:</strong> ${batch.type}<br>
+                <strong>Color:</strong> <span class="color-box" style="background-color: ${batch.colorHex}; margin-right: 5px;"></span>${batch.color}<br>
+                <strong>Asset ID:</strong> ${batch.assetId}<br>
+                <strong>Weight:</strong> ${batch.weight} kgs<br>
+                <strong>Status:</strong> <span class="status-badge status-${batch.status.toLowerCase()}">${batch.status}</span>
+            `;
+
+            display.style.display = 'block';
+
+            // Scroll to changes section
+            document.getElementById('changes').focus();
+            document.getElementById('changes').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function loadBatchData() {
+            const batchId = document.getElementById('previousBatch').value;
+            if (batchId) {
+                currentData = JSON.parse(JSON.stringify(batchData[batchId]));
+            }
+        }
+
+        async function predictWithAI() {
+            const changes = document.getElementById('changes').value;
+
+            if (!currentData) {
+                alert('Please select a previous batch first from the table above');
+                return;
+            }
+
+            if (!changes.trim()) {
+                alert('Please describe the differences from the previous batch');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('predictedData').style.display = 'none';
+
+            try {
+                // Send request to local proxy. The proxy will forward to Ollama running locally.
+                const response = await fetch("/api/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: "user",
+                                content: `You are an assistant for filling in Aware™ Token data for textile manufacturers.
+
+Previous batch data:
+Batch Number: ${currentData.batchNumber || 'N/A'}
+Material Type: ${currentData.type || currentData.materialType || 'N/A'}
+Weight: ${currentData.weight} kg
+Description: ${currentData.description || 'N/A'}
+Location: ${currentData.location || 'N/A'}
+Certifications: ${currentData.certifications || 'N/A'}
+
+The producer indicates these changes (may be in Dutch or English):
+"${changes}"
+
+TRANSLATION GUIDE:
+- "afgenomen" = "decreased by" or "reduced by"
+- "toegenomen" = "increased by"
+- Example: "de batch met 50kg is afgenomen" means weight decreased by 50kg, so new weight = ${currentData.weight} - 50 = ${currentData.weight - 50}
+
+CRITICAL INSTRUCTIONS:
+1. If user says "afgenomen" (decreased), SUBTRACT that amount from original weight
+2. If user says weight changed to a specific number, use that exact number
+3. Return ONLY valid JSON matching the structure below
+4. Fill ALL required fields
+5. NO markdown code blocks, NO explanations, ONLY the JSON
+
+Respond with valid JSON in this EXACT format:
+{
+  "name": "${currentData.type || currentData.materialType || 'Yarn'}",
+  "weight": ${currentData.weight},
+  "composition": [{"material": "${currentData.type || currentData.materialType || 'Cotton'}", "percentage": 100, "sustainable": true, "claim": "Verified"}],
+  "tracer": "aware",
+  "tracerDate": "2026-01-15",
+  "suppliers": [{"name": "${currentData.createdBy || 'Supplier'}", "type": "Material Supplier", "location": "${currentData.location || 'Netherlands'}", "weight": ${currentData.weight}}],
+  "compliances": ["${currentData.certifications || 'Blockchain Verified'}"]
+}
+
+Now update the fields based on the changes described above.`
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error('Prediction API returned error', response.status, errText);
+                    // Fallback to local analysis if API fails
+                    analyzeChanges(changes);
+                    displayPredictedData();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('predictedData').style.display = 'block';
+                    document.getElementById('predictedData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return;
+                }
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Failed to parse JSON response from prediction API');
+                    // Fallback to local analysis
+                    analyzeChanges(changes);
+                    displayPredictedData();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('predictedData').style.display = 'block';
+                    document.getElementById('predictedData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return;
+                }
+
+                // Try multiple known response shapes to extract the assistant text
+                let aiResponse = '';
+                if (data.content) {
+                    if (Array.isArray(data.content)) {
+                        const item = data.content.find(i => i.type === 'text');
+                        aiResponse = item?.text || '';
+                    } else if (typeof data.content === 'string') {
+                        aiResponse = data.content;
+                    }
+                }
+                aiResponse = aiResponse || data.completion?.content || data.completion || data.output?.text || data.choices?.[0]?.message?.content || data.choices?.[0]?.text || (typeof data === 'string' ? data : '');
+
+                if (!aiResponse) {
+                    console.error('Could not find assistant text in API response', data);
+                    // Fallback to local analysis
+                    analyzeChanges(changes);
+                    displayPredictedData();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('predictedData').style.display = 'block';
+                    document.getElementById('predictedData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return;
+                }
+
+                const cleanJson = aiResponse.replace(/```json|```/g, "").trim();
+
+                let predictedData;
+                try {
+                    predictedData = JSON.parse(cleanJson);
+                    // Update currentData with AI predictions
+                    if (predictedData.weight) currentData.weight = predictedData.weight;
+                    if (predictedData.name) currentData.name = predictedData.name;
+                    if (predictedData.composition) currentData.composition = predictedData.composition;
+                    if (predictedData.suppliers) currentData.suppliers = predictedData.suppliers;
+                    if (predictedData.compliances) currentData.compliances = predictedData.compliances;
+                    if (predictedData.tracer) currentData.tracer = predictedData.tracer;
+                    if (predictedData.tracerDate) currentData.tracerDate = predictedData.tracerDate;
+                    
+                    displayPredictedData();
+                } catch (e) {
+                    console.error('Failed to parse JSON from assistant response', cleanJson);
+                    // Fallback to local analysis
+                    analyzeChanges(changes);
+                    displayPredictedData();
+                }
+
+            } catch (error) {
+                console.error('Error while calling prediction API:', error);
+                // Fallback to local analysis if API call fails
+                analyzeChanges(changes);
+                displayPredictedData();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('predictedData').style.display = 'block';
+                document.getElementById('predictedData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function continueWithoutAI() {
+            console.log('continueWithoutAI called');
+            try {
+                // Initialize empty currentData
+                currentData = {
+                    composition: [],
+                    suppliers: [],
+                    compliances: [],
+                    tracer: 'aware',
+                    tracerDate: '',
+                    tracerName: ''
+                };
+                
+                console.log('currentData initialized:', currentData);
+                
+                // Change title to "Blank data"
+                const titleElement = document.querySelector('#predictedData h3');
+                if (titleElement) {
+                    titleElement.textContent = 'Blank data';
+                    console.log('Title updated');
+                } else {
+                    console.warn('Title element not found');
+                }
+                
+                // Show predicted data section
+                const predictedDataSection = document.getElementById('predictedData');
+                if (predictedDataSection) {
+                    predictedDataSection.style.display = 'block';
+                    console.log('Predicted data section shown');
+                    setTimeout(() => {
+                        predictedDataSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                } else {
+                    console.error('Predicted data section not found!');
+                    alert('Error: Form section not found. Please refresh the page.');
+                    return;
+                }
+                
+                // Display all sections with blank data
+                displayBlankData();
+                
+                console.log('continueWithoutAI completed successfully');
+            } catch (error) {
+                console.error('Error in continueWithoutAI:', error);
+                alert('Error starting form: ' + error.message + '\n\nCheck browser console (F12) for details.');
+            }
+        }
+        
+        function displayBlankData() {
+            console.log('displayBlankData called');
+            try {
+                // Clear basic fields
+                const today = new Date().toISOString().split('T')[0];
+                const assetDate = document.getElementById('assetDate');
+                const tokenType = document.getElementById('tokenType');
+                const materialSpec = document.getElementById('materialSpec');
+                const mainColor = document.getElementById('mainColor');
+                const totalWeight = document.getElementById('totalWeight');
+                const assetId = document.getElementById('assetId');
+                
+                if (assetDate) assetDate.value = today;
+                if (tokenType) tokenType.value = 'Yarn';
+                if (materialSpec) materialSpec.value = '';
+                if (mainColor) mainColor.value = '';
+                if (totalWeight) totalWeight.value = '';
+                if (assetId) assetId.value = '';
+                
+                console.log('Basic fields cleared');
+                
+                // Display empty composition list
+                if (typeof displayCompositions === 'function') {
+                    displayCompositions();
+                    console.log('displayCompositions called');
+                }
+                
+                // Initialize tracer section
+                if (typeof updateTracerFields === 'function') {
+                    updateTracerFields();
+                    console.log('updateTracerFields called');
+                }
+                
+                // Display empty compliances checkboxes
+                if (typeof displayCompliances === 'function') {
+                    displayCompliances();
+                    console.log('displayCompliances called');
+                }
+                
+                // Display empty suppliers
+                if (typeof displaySuppliers === 'function') {
+                    displaySuppliers();
+                    console.log('displaySuppliers called');
+                }
+                
+                // Update DPP
+                if (typeof updateDPP === 'function') {
+                    updateDPP();
+                    console.log('updateDPP called');
+                }
+                
+                console.log('displayBlankData completed successfully');
+            } catch (error) {
+                console.error('Error in displayBlankData:', error);
+                alert('Error initializing form: ' + error.message);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function () {
+            initBatches();
+        });
+
+        function analyzeChanges(changesText) {
+            const text = changesText.toLowerCase();
+
+            // Parse weight changes - improved to catch "weight is now X kg" or "is now X kg"
+            const weightPatterns = [
+                /(\d+(?:[.,]\d+)?)\s*(?:kg|kilogram)/i,
+                /weight\s+(?:is\s+)?(?:now\s+)?(\d+(?:[.,]\d+)?)/i,
+                /(?:is\s+)?now\s+(\d+(?:[.,]\d+)?)\s*kg/i
+            ];
+            for (const pattern of weightPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    currentData.weight = Math.round(parseFloat(match[1].replace(',', '.')));
+                    break;
+                }
+            }
+
+            // Parse type/material changes - improved to catch "type has changed from X to Y" or "type is now Y"
+            const typePatterns = [
+                /type\s+(?:has\s+)?changed\s+(?:from\s+[\w\s]+\s+)?to\s+([\w\s]+?)(?:,|\.|and|$)/i,
+                /type\s+is\s+(?:now\s+)?([\w\s]+?)(?:,|\.|and|$)/i,
+                /(?:fabric|material|batch)\s+(?:is|called|named|:)?\s*([A-Z][^,\.]*(?:cotton|polyester|hemp|blend|fabric|linen)[^,\.]*)/i
+            ];
+            for (const pattern of typePatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    currentData.name = match[1].trim();
+                    break;
+                }
+            }
+
+            // Parse color - improved pattern to catch multiple formats
+            const colorPatterns = [
+                // "van paars naar rood" or "from purple to red"
+                /(?:van|from)\s+(\w+)\s+(?:naar|to)\s+(\w+)/i,
+                // "changed from X to Y" or "veranderd van X naar Y"
+                /(?:kleur|color)\s+(?:has\s+)?(?:changed|veranderd|gewijzigd)\s+(?:from|van)\s+(?:\w+)\s+(?:to|naar)\s+(\w+)/i,
+                // "moet veranderen naar rood" or "should change to red"
+                /(?:moet\s+)?(?:veranderen|change)\s+(?:naar|to)\s+(\w+)/i,
+                // "color is now red", "the color is red", "kleur is rood"
+                /(?:the\s+)?(?:kleur|color)\s+is\s+(?:now\s+)?(\w+)/i,
+                // "is now red" (when color is mentioned before)
+                /(?:and\s+)?(?:the\s+)?(?:is\s+)?now\s+(red|blue|green|yellow|black|white|navy|purple|orange|pink|brown|gray|grey|beige|rood|blauw|groen|geel|zwart|wit|paars|oranje|roze|bruin)/i,
+                // "color: red" or "kleur: rood"
+                /(?:color|farbe|kleur|colore|colour)[:\s]+(\w+)/i
+            ];
+            // For pattern "van X naar Y", we want the second color (Y)
+            let colorFound = false;
+            for (let i = 0; i < colorPatterns.length; i++) {
+                const match = changesText.match(colorPatterns[i]);
+                if (match) {
+                    // First pattern has 2 capture groups, we want the second one
+                    if (i === 0 && match[2]) {
+                        currentData.color = match[2].trim();
+                        colorFound = true;
+                        break;
+                    } else if (match[1]) {
+                        currentData.color = match[1].trim();
+                        colorFound = true;
+                        break;
+                    }
+                }
+            }
+
+            // Parse composition - improved regex patterns
+            currentData.composition = [];
+
+            // Look for organic cotton
+            const organicCottonMatch = text.match(/(\d+)\s*%\s*organic\s+cotton/i);
+            if (organicCottonMatch) {
+                currentData.composition.push({
+                    material: "Organic Cotton",
+                    percentage: parseInt(organicCottonMatch[1]),
+                    sustainable: true,
+                    claim: "GOTS Certified"
+                });
+            }
+
+            // Look for recycled cotton
+            const recycledCottonMatch = text.match(/(\d+)\s*%\s*recycled\s+cotton/i);
+            if (recycledCottonMatch) {
+                currentData.composition.push({
+                    material: "Recycled Cotton",
+                    percentage: parseInt(recycledCottonMatch[1]),
+                    sustainable: true,
+                    claim: "Post-Consumer"
+                });
+            }
+
+            // Look for regular cotton (if not organic or recycled mentioned)
+            if (!organicCottonMatch && !recycledCottonMatch) {
+                const cottonMatch = text.match(/(\d+)\s*%\s*(?:regular\s+)?cotton(?!\s*(?:recycled|organic))/i);
+                if (cottonMatch) {
+                    currentData.composition.push({
+                        material: "Cotton",
+                        percentage: parseInt(cottonMatch[1]),
+                        sustainable: false,
+                        claim: ""
+                    });
+                }
+            }
+
+            // Look for recycled polyester
+            const recycledPolyesterMatch = text.match(/(\d+)\s*%\s*recycled\s+polyester/i);
+            if (recycledPolyesterMatch) {
+                currentData.composition.push({
+                    material: "Recycled Polyester",
+                    percentage: parseInt(recycledPolyesterMatch[1]),
+                    sustainable: true,
+                    claim: "Post-Consumer"
+                });
+            }
+
+            // Look for regular polyester (if recycled not mentioned)
+            if (!recycledPolyesterMatch) {
+                const polyesterMatch = text.match(/(\d+)\s*%\s*polyester(?!\s+recycled)/i);
+                if (polyesterMatch) {
+                    currentData.composition.push({
+                        material: "Polyester",
+                        percentage: parseInt(polyesterMatch[1]),
+                        sustainable: false,
+                        claim: ""
+                    });
+                }
+            }
+
+            // Look for hemp
+            const hempMatch = text.match(/(\d+)\s*%\s*(?:organic\s+)?hemp/i);
+            if (hempMatch) {
+                currentData.composition.push({
+                    material: "Hemp",
+                    percentage: parseInt(hempMatch[1]),
+                    sustainable: true,
+                    claim: text.includes('organic') && text.includes('hemp') ? "Organic" : "Sustainable"
+                });
+            }
+
+            // Look for linen
+            const linenMatch = text.match(/(\d+)\s*%\s*(?:organic\s+)?linen/i);
+            if (linenMatch) {
+                currentData.composition.push({
+                    material: "Linen",
+                    percentage: parseInt(linenMatch[1]),
+                    sustainable: true,
+                    claim: text.includes('organic') && text.includes('linen') ? "Organic" : "Sustainable"
+                });
+            }
+
+            // Normalize percentages to 100%
+            const totalPercentage = currentData.composition.reduce((sum, comp) => sum + comp.percentage, 0);
+            if (totalPercentage > 0 && totalPercentage !== 100) {
+                const scale = 100 / totalPercentage;
+                currentData.composition.forEach(comp => {
+                    comp.percentage = Math.round(comp.percentage * scale);
+                });
+            }
+
+            // Parse supplier changes - improved
+            if (text.includes('supplier') || text.includes('new')) {
+                const supplierPattern = /(?:new\s+)?supplier[:\s]+(?:["'])?([a-zA-Z\s&.,\-()]+?)(?:["']|(?=\s+from|\s+in|,|location|type|address)|$)/gi;
+                const matches = [...changesText.matchAll(supplierPattern)];
+
+                if (matches.length > 0) {
+                    matches.forEach((match, idx) => {
+                        const name = match[1].trim();
+                        if (name.length > 2 && !name.match(/^\d+/)) {
+                            if (idx < currentData.suppliers.length) {
+                                currentData.suppliers[idx].name = name;
+                            } else {
+                                currentData.suppliers.push({
+                                    name: name,
+                                    type: "Material Supplier",
+                                    location: "",
+                                    weight: 0
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Parse location/country changes
+            const countries = ['India', 'Turkey', 'China', 'Pakistan', 'France', 'Germany', 'Italy', 'USA', 'Egypt', 'Vietnam', 'Bangladesh', 'Indonesia'];
+            countries.forEach(country => {
+                if (text.includes(country.toLowerCase())) {
+                    if (currentData.suppliers.length > 0) {
+                        currentData.suppliers[0].location = country;
+                    }
+                }
+            });
+
+            // Parse supplier types
+            const supplierTypes = {
+                'cotton': 'Cotton Supplier',
+                'polyester': 'Polyester Supplier',
+                'hemp': 'Hemp Supplier',
+                'linen': 'Linen Supplier',
+                'recycled': 'Recycled Material Supplier',
+                'organic': 'Organic Material Supplier'
+            };
+
+            Object.entries(supplierTypes).forEach(([key, type]) => {
+                if (text.includes(key) && currentData.suppliers.length > 0) {
+                    if (!currentData.suppliers[0].type.includes(type)) {
+                        currentData.suppliers[0].type = type;
+                    }
+                }
+            });
+
+            // Parse tracer changes
+            if (text.includes('aware tracer') || text.includes('aware™')) {
+                currentData.tracer = "aware";
+                currentData.tracerDate = new Date().toISOString().split('T')[0];
+            } else if (text.includes('custom tracer') || text.includes('tracer:')) {
+                currentData.tracer = "custom";
+                const tracerNameMatch = changesText.match(/(?:tracer\s*:?\s*|tracer\s+name\s*:?\s*)([^,\.]+)/i);
+                if (tracerNameMatch) {
+                    currentData.tracerName = tracerNameMatch[1].trim();
+                }
+            } else if (text.includes('no tracer')) {
+                currentData.tracer = "none";
+            }
+
+            // Parse certificate changes - improved
+            const certMap = {
+                'gots': 'GOTS',
+                'grs': 'GRS',
+                'oeko': 'OEKO-TEX Standard 100',
+                'eu organic': 'EU Organic',
+                'fair trade': 'Fair Trade',
+                'fsc': 'FSC',
+                'bluesign': 'Bluesign'
+            };
+
+            currentData.compliances = [];
+            Object.entries(certMap).forEach(([key, cert]) => {
+                if (text.includes(key)) {
+                    if (!currentData.compliances.includes(cert)) {
+                        currentData.compliances.push(cert);
+                    }
+                }
+            });
+
+            // Distribute weight across suppliers
+            if (currentData.composition.length > 0 && currentData.suppliers.length > 0) {
+                const supplierCount = Math.min(currentData.composition.length, currentData.suppliers.length);
+                const weightPerSupplier = Math.round(currentData.weight / supplierCount);
+                for (let i = 0; i < supplierCount; i++) {
+                    currentData.suppliers[i].weight = weightPerSupplier;
+                }
+            }
+        }
+
+        function displayPredictedData() {
+            // Reset title to AI version
+            document.querySelector('#predictedData h3').textContent = '✨ Predicted data - Check and correct if needed';
+            
+            // Set date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('assetDate').value = today;
+
+            // Set basic fields - use currentData values instead of hardcoded 'Yarn'
+            document.getElementById('tokenType').value = currentData.name || currentData.type || 'Yarn';
+            document.getElementById('materialSpec').value = currentData.name || '';
+            document.getElementById('mainColor').value = currentData.color || '';
+            document.getElementById('totalWeight').value = currentData.weight || '';
+            document.getElementById('assetId').value = 'tiancheng - ' + (currentData.name || 'Yarn') + ' - ' + (currentData.color || '') + ' - ' + Date.now();
+
+            displayCompositions();
+            displaySuppliers();
+            updateTracerFields();
+            displayCompliances();
+            updateDPP();
+        }
+
+        function displayCompositions() {
+            const list = document.getElementById('compositionList');
+            list.innerHTML = '';
+            
+            if (!currentData.composition || currentData.composition.length === 0) {
+                list.innerHTML = '<p style="color: #999; font-style: italic;">No compositions yet. Click "+ Add Composition Material" to add one.</p>';
+                return;
+            }
+            
+            currentData.composition.forEach((comp, index) => {
+                const div = document.createElement('div');
+                div.className = 'supplier-box';
+                div.innerHTML = `
+                    <div style="margin-bottom: 10px;"><strong>Material - ${index + 1}</strong></div>
+                    <div class="input-row">
+                        <label>Composition Material *:</label>
+                        <select onchange="updateComposition(${index}, 'material', this.value)">
+                            <option value="${comp.material}">${comp.material || '--Select Composition Material--'}</option>
+                        </select>
+                    </div>
+                    <div class="input-row" style="margin-top: 10px;">
+                        <input type="number" value="${comp.percentage}" onchange="updateComposition(${index}, 'percentage', this.value)" placeholder="%" style="max-width: 80px;">
+                        <span>%</span>
+                    </div>
+                    <div class="sustainability-toggle">
+                        <span>Sustainable:</span>
+                        <div class="toggle-switch ${comp.sustainable ? 'active' : ''}" onclick="toggleSustainability(${index})"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label>Sustainability Claim *:</label>
+                        <input type="text" value="${comp.claim}" onchange="updateComposition(${index}, 'claim', this.value)" placeholder="e.g., GOTS Certified, Post-Consumer">
+                    </div>
+                    <button class="remove-btn" onclick="removeComposition(${index})" style="width: 100%; margin-top: 10px;">✕ Remove Material</button>
+                `;
+                list.appendChild(div);
+            });
+
+            // Show total composition percentage
+            const totalPercentage = currentData.composition.reduce((sum, comp) => sum + comp.percentage, 0);
+            const totalDiv = document.createElement('div');
+            totalDiv.style.marginTop = '10px';
+            totalDiv.innerHTML = `<strong>Total Composition: ${totalPercentage}% of 100%</strong>`;
+            list.appendChild(totalDiv);
+        }
+
+        function toggleSustainability(index) {
+            currentData.composition[index].sustainable = !currentData.composition[index].sustainable;
+            displayCompositions();
+        }
+
+        function addComposition() {
+            currentData.composition.push({ material: "", percentage: 0, sustainable: true, claim: "" });
+            displayCompositions();
+        }
+
+        function removeComposition(index) {
+            currentData.composition.splice(index, 1);
+            displayCompositions();
+        }
+
+        function updateComposition(index, field, value) {
+            if (field === 'percentage') {
+                currentData.composition[index][field] = parseInt(value) || 0;
+            } else {
+                currentData.composition[index][field] = value;
+            }
+        }
+
+        function updateTracerFields() {
+            const tracerType = document.querySelector('input[name="tracerType"]:checked');
+            const details = document.getElementById('tracerDetails');
+
+            if (!tracerType) {
+                details.innerHTML = '';
+                return;
+            }
+
+            currentData.tracer = tracerType.value;
+
+            if (tracerType.value === 'aware') {
+                details.innerHTML = `
+                    <label>Aware™ Tracer Positive Scan Date *:</label>
+                    <input type="date" id="tracerDate" value="${currentData.tracerDate || '2022-11-15'}" onchange="updateTracerDate(this.value)">
+                    
+                    <label style="margin-top: 15px;">Tracer Test Report:</label>
+                    <input type="file" id="tracerFile" accept=".pdf">
+                    <small style="display: block; margin-top: 5px; color: #999;">Upload PDF</small>
+                `;
+            } else if (tracerType.value === 'custom') {
+                details.innerHTML = `
+                    <label>Custom Tracer Name *:</label>
+                    <input type="text" id="tracerName" placeholder="Enter custom tracer name" value="${currentData.tracerName || ''}" onchange="currentData.tracerName = this.value;">
+                    
+                    <label style="margin-top: 15px;">Tracer Test Report:</label>
+                    <input type="file" id="tracerFile" accept=".pdf">
+                    <small style="display: block; margin-top: 5px; color: #999;">Upload PDF</small>
+                `;
+            }
+        }
+
+        function updateTracerDate(date) {
+            currentData.tracerDate = date;
+        }
+
+        function displaySuppliers() {
+            const list = document.getElementById('suppliersList');
+            list.innerHTML = '';
+            
+            if (!currentData.suppliers || currentData.suppliers.length === 0) {
+                list.innerHTML = '<p style="color: #999; font-style: italic;">No suppliers yet. Click "+ Add Supplier" to add one.</p>';
+                return;
+            }
+            
+            currentData.suppliers.forEach((supplier, index) => {
+                const div = document.createElement('div');
+                div.className = 'supplier-box';
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Supplier ${index + 1}</strong>
+                        <button class="remove-btn" onclick="removeSupplier(${index})">✕ Remove</button>
+                    </div>
+                    <div class="input-row" style="margin-top: 10px;">
+                        <input type="text" value="${supplier.name}" onchange="updateSupplier(${index}, 'name', this.value)" placeholder="Supplier Name *">
+                    </div>
+                    <div class="input-row">
+                        <input type="text" value="${supplier.type}" onchange="updateSupplier(${index}, 'type', this.value)" placeholder="Supplier Type (e.g., Cotton Supplier) *">
+                    </div>
+                    <div class="input-row">
+                        <input type="text" value="${supplier.location}" onchange="updateSupplier(${index}, 'location', this.value)" placeholder="Location/Country *">
+                        <input type="number" value="${supplier.weight}" onchange="updateSupplier(${index}, 'weight', this.value)" placeholder="Weight (kg) *" style="max-width: 150px;">
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 10px;">📄 Required documents: Invoice, Packing List, Proof of Delivery</small>
+                    <div class="input-row" style="margin-top: 10px;">
+                        <input type="file" onchange="updateSupplier(${index}, 'invoice', this.files[0])" placeholder="Upload Invoice">
+                        <input type="file" onchange="updateSupplier(${index}, 'packingList', this.files[0])" placeholder="Upload Packing List">
+                        <input type="file" onchange="updateSupplier(${index}, 'delivery', this.files[0])" placeholder="Upload Proof of Delivery">
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addSupplier() {
+            currentData.suppliers.push({ name: "", type: "", location: "", weight: 0 });
+            displaySuppliers();
+        }
+
+        function removeSupplier(index) {
+            currentData.suppliers.splice(index, 1);
+            displaySuppliers();
+        }
+
+        function updateSupplier(index, field, value) {
+            if (field === 'weight') {
+                currentData.suppliers[index][field] = parseInt(value) || 0;
+            } else {
+                currentData.suppliers[index][field] = value;
+            }
+        }
+
+        function displayCompliances() {
+            const list = document.getElementById('compliancesList');
+            const allCerts = ['GOTS', 'GRS', 'OEKO-TEX Standard 100', 'EU Organic', 'Fair Trade', 'FSC', 'Bluesign'];
+
+            let html = '<div class="checkbox-group">';
+            allCerts.forEach(cert => {
+                const isChecked = currentData.compliances && currentData.compliances.includes(cert);
+                html += `<label>
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCompliance('${cert}', this.checked)"> ${cert}
+                </label>`;
+            });
+            html += '</div>';
+            list.innerHTML = html;
+        }
+
+        function toggleCompliance(cert, checked) {
+            if (checked && !currentData.compliances.includes(cert)) {
+                currentData.compliances.push(cert);
+            } else if (!checked) {
+                currentData.compliances = currentData.compliances.filter(c => c !== cert);
+            }
+        }
+
+        function addSelfValidation() {
+            const list = document.getElementById('selfValidationList');
+            const index = list.children.length;
+            const div = document.createElement('div');
+            div.className = 'supplier-box';
+            div.innerHTML = `
+                <div style="margin-bottom: 10px;"><strong>Source - ${index + 1}</strong></div>
+                
+                <label>Material:</label>
+                <input type="text" placeholder="e.g., Silk" style="margin-bottom: 10px;">
+                
+                <label>Claim:</label>
+                <input type="text" placeholder="e.g., Organic" style="margin-bottom: 10px;">
+                
+                <label>Weight kgs:</label>
+                <input type="number" placeholder="e.g., 4534" style="margin-bottom: 10px;">
+                
+                <label>Kgs *:</label>
+                <input type="number" placeholder="kgs" style="margin-bottom: 10px;">
+                
+                <label>Feedstock Type *:</label>
+                <select style="margin-bottom: 10px;">
+                    <option value="">--Please select Feedstock Type--</option>
+                </select>
+                
+                <label>Feedstock Source Type *:</label>
+                <select style="margin-bottom: 10px;">
+                    <option value="">--Please select Feedstock Source type--</option>
+                </select>
+                
+                <label>Source Name *:</label>
+                <select style="margin-bottom: 10px;">
+                    <option value="">--Please select Source Name--</option>
+                </select>
+                
+                <label>Address:</label>
+                <input type="text" placeholder="Address" style="margin-bottom: 10px;">
+                
+                <label>Source Certification:</label>
+                <select style="margin-bottom: 10px;">
+                    <option value="">--Please select Source Certification--</option>
+                </select>
+                
+                <label>Source Invoice No. *:</label>
+                <input type="text" placeholder="e.g., 77829H23" style="margin-bottom: 10px;">
+                
+                <label>Source Invoice Date *:</label>
+                <input type="date" style="margin-bottom: 10px;">
+                
+                <label>Invoice:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Packing List:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Proof of Delivery:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Lab Testing:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Certificate Name 1:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Certificate Name 2:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Certificate Name 3:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Other Document Name:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <label>Full Name *:</label>
+                <input type="text" placeholder="User Full Name" style="margin-bottom: 10px;">
+                
+                <div style="margin-top: 10px; padding: 10px; background: #f0f4ff; border-radius: 4px; font-size: 12px;">
+                    <label style="display: flex; align-items: start; gap: 8px;">
+                        <input type="checkbox" style="width: auto; margin-top: 3px;">
+                        <span>I, declare on behalf of my company, that the information I provided is true and correct and that I have used this sustainable feedstock to produce the assets I want to tokenize by this application. I also declare that this sustainable feedstock is from genuine organic or recycled origin, is from non-GMO resources, and do not contain pesticides.</span>
+                    </label>
+                </div>
+                
+                <button class="remove-btn" onclick="this.parentElement.remove()" style="width: 100%; margin-top: 10px;">✕ Remove</button>
+            `;
+            list.appendChild(div);
+        }
+
+        function addGuanXu() {
+            const list = document.getElementById('guanXuList');
+            const div = document.createElement('div');
+            div.className = 'supplier-box';
+            div.innerHTML = `
+                <div style="margin-bottom: 10px;"><strong>Guan Xu Documentation</strong></div>
+                
+                <label>Upload PDF from Guan Xu *:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px;">
+                    <p><strong>Material:</strong> Silk</p>
+                    <p><strong>Claim:</strong> Organic</p>
+                    <p><strong>Weight kgs:</strong> 4534</p>
+                    <p><strong>Color:</strong> -</p>
+                    <p><strong>Feedstock Origin:</strong> N/A</p>
+                </div>
+                
+                <label style="margin-top: 15px;">Full Name *:</label>
+                <input type="text" placeholder="User Full Name" style="margin-bottom: 10px;">
+                
+                <div style="margin-top: 10px; padding: 10px; background: #f0f4ff; border-radius: 4px; font-size: 12px;">
+                    <label style="display: flex; align-items: start; gap: 8px;">
+                        <input type="checkbox" style="width: auto; margin-top: 3px;">
+                        <span>I, declare on behalf of my company, that the information I provided is true and correct and that I have used this sustainable feedstock to produce the assets I want to tokenize by this application. I also declare that this sustainable feedstock is from genuine organic or recycled origin, is from non-GMO resources, and do not contain pesticides.</span>
+                    </label>
+                </div>
+                
+                <button class="remove-btn" onclick="this.parentElement.remove()" style="width: 100%; margin-top: 10px;">✕ Remove</button>
+            `;
+            list.appendChild(div);
+        }
+
+        function addSTCP() {
+            const list = document.getElementById('stcpList');
+            const div = document.createElement('div');
+            div.className = 'supplier-box';
+            div.innerHTML = `
+                <div style="margin-bottom: 10px;"><strong>STCP Documentation</strong></div>
+                
+                <label>Upload PDF from STCP *:</label>
+                <input type="file" accept=".pdf" style="margin-bottom: 10px;">
+                <small style="display: block; margin-top: -5px; margin-bottom: 10px; color: #999;">Upload PDF</small>
+                
+                <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px; font-size: 13px;">
+                    <p><strong>Material:</strong> Silk</p>
+                    <p><strong>Claim:</strong> Organic</p>
+                    <p><strong>Weight kgs:</strong> 4534</p>
+                    <p><strong>Color:</strong> -</p>
+                    <p><strong>Feedstock Origin:</strong> N/A</p>
+                </div>
+                
+                <label style="margin-top: 15px;">Full Name *:</label>
+                <input type="text" placeholder="User Full Name" style="margin-bottom: 10px;">
+                
+                <div style="margin-top: 10px; padding: 10px; background: #f0f4ff; border-radius: 4px; font-size: 12px;">
+                    <label style="display: flex; align-items: start; gap: 8px;">
+                        <input type="checkbox" style="width: auto; margin-top: 3px;">
+                        <span>I, declare on behalf of my company, that the information I provided is true and correct and that I have used this sustainable feedstock to produce the assets I want to tokenize by this application. I also declare that this sustainable feedstock is from genuine organic or recycled origin, is from non-GMO resources, and do not contain pesticides.</span>
+                    </label>
+                </div>
+                
+                <button class="remove-btn" onclick="this.parentElement.remove()" style="width: 100%; margin-top: 10px;">✕ Remove</button>
+            `;
+            list.appendChild(div);
+        }
+
+        function saveSection(sectionNumber) {
+            alert('Section ' + sectionNumber + ' saved! You can continue to the next section.');
+            updateDPP();
+        }
+
+        function updateDPP() {
+            if (!currentData) return;
+            
+            // Update DPP summary with current data
+            const dppTokenType = document.getElementById('dppTokenType');
+            const dppAssetId = document.getElementById('dppAssetId');
+            const dppComposition = document.getElementById('dppComposition');
+            const dppColor = document.getElementById('dppColor');
+            const dppQuantity = document.getElementById('dppQuantity');
+            const dppTokenCount = document.getElementById('dppTokenCount');
+            const dppVCMain = document.getElementById('dppVCMain');
+            const dppVCSub = document.getElementById('dppVCSub');
+            const dppTracer = document.getElementById('dppTracer');
+            const dppCertificates = document.getElementById('dppCertificates');
+            
+            if (dppTokenType) dppTokenType.textContent = document.getElementById('tokenType')?.value || '-';
+            if (dppAssetId) dppAssetId.textContent = document.getElementById('assetId')?.value || '-';
+
+            // Composition
+            let compositionText = '';
+            if (currentData.composition) {
+                currentData.composition.forEach(comp => {
+                    compositionText += comp.material + ' ' + comp.percentage + '%, ';
+                });
+            }
+            if (dppComposition) dppComposition.textContent = compositionText || '-';
+
+            if (dppColor) dppColor.textContent = document.getElementById('mainColor')?.value || '-';
+
+            const weight = document.getElementById('totalWeight')?.value;
+            if (dppQuantity) dppQuantity.textContent = weight || '0';
+            if (dppTokenCount) dppTokenCount.textContent = weight || '0';
+
+            const vcMain = document.getElementById('valueChainMain')?.value;
+            const vcSub = document.getElementById('valueChainSub')?.value;
+            if (dppVCMain) dppVCMain.textContent = vcMain || '-';
+            if (dppVCSub) dppVCSub.textContent = vcSub || '-';
+
+            const tracerType = document.querySelector('input[name="tracerType"]:checked');
+            if (dppTracer) dppTracer.textContent = tracerType ? tracerType.value : '-';
+
+            if (dppCertificates && currentData.compliances) {
+                dppCertificates.textContent = currentData.compliances.join(', ') || '-';
+            }
+        }
+
+        function toggleSustainableClaims() {
+            const toggle = document.getElementById('sustainableClaimsToggle');
+            const content = document.getElementById('sustainableClaimsContent');
+
+            toggle.classList.toggle('active');
+
+            if (toggle.classList.contains('active')) {
+                content.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        function toggleWetProcessing() {
+            const toggle = document.getElementById('wetProcessingToggle');
+            const content = document.getElementById('wetProcessingContent');
+
+            toggle.classList.toggle('active');
+
+            if (toggle.classList.contains('active')) {
+                content.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        function toggleTracerAdded() {
+            const toggle = document.getElementById('tracerAddedToggle');
+            const section = document.getElementById('tracerTypeSection');
+
+            toggle.classList.toggle('active');
+
+            if (toggle.classList.contains('active')) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+                // Reset tracer type selection
+                const radios = document.querySelectorAll('input[name="tracerType"]');
+                radios.forEach(radio => radio.checked = false);
+                document.getElementById('tracerDetails').innerHTML = '';
+            }
+        }
+
+        async function submitData() {
+            const weight = document.getElementById('totalWeight').value;
+
+            if (!weight) {
+                alert('Please fill in the total weight');
+                return;
+            }
+
+            if (currentData.composition.length === 0) {
+                alert('Please add at least one material to the composition');
+                return;
+            }
+
+            // Build composition string from materials
+            const compositionStr = currentData.composition
+                .map(comp => `${comp.material} (${comp.percentage}%)`)
+                .join(', ');
+
+            // Build certifications string
+            const certificationsStr = currentData.compliances.join(', ') || 'None';
+
+            // Prepare blockchain batch data structure
+            const batchData = {
+                physicalAsset: {
+                    assetId: document.getElementById('assetId').value || 'asset-' + Date.now(),
+                    material: document.getElementById('tokenType').value || 'Yarn',
+                    composition: compositionStr,
+                    weight: weight + ' kg',
+                    batchNumber: document.getElementById('batchNo').value || 'BATCH-' + Date.now(),
+                    productionDate: document.getElementById('assetDate').value || new Date().toISOString().split('T')[0],
+                    expiryDate: '' // Optional
+                },
+                tracer: {
+                    supplier: document.getElementById('productionFacility').value || 'Unknown',
+                    farmLocation: '', // Not in current form
+                    country: '', // Not in current form  
+                    gpsCoordinates: '', // Not in current form
+                    certifications: certificationsStr,
+                    harvestDate: document.getElementById('assetDate').value || new Date().toISOString().split('T')[0]
+                },
+                validation: {
+                    qualityGrade: document.getElementById('materialSpec').value || 'Standard',
+                    moistureContent: '', // Not in current form
+                    contamination: '', // Not in current form
+                    inspectionDate: new Date().toISOString().split('T')[0],
+                    inspector: 'Self-Validated',
+                    labResults: 'Pending'
+                },
+                compliance: {
+                    regulatoryStandards: 'ISO 9001',
+                    sustainabilityCert: currentData.compliances.includes('Organic') ? 'Organic' : 'None',
+                    fairTradeCert: currentData.compliances.includes('Fair Trade') ? 'Fair Trade' : 'None',
+                    organicCert: currentData.compliances.includes('Organic') ? 'Yes' : 'No',
+                    carbonFootprint: '', // Could be calculated
+                    waterUsage: '' // Not in current form
+                }
+            };
+
+            // Validate required fields
+            const missingFields = [];
+            if (!batchData.physicalAsset.assetId) missingFields.push('Asset ID');
+            if (!batchData.physicalAsset.material) missingFields.push('Material Type');
+            if (!batchData.physicalAsset.weight) missingFields.push('Weight');
+            if (!batchData.physicalAsset.batchNumber) missingFields.push('Batch Number');
+            
+            if (missingFields.length > 0) {
+                alert('Please fill in the following required fields:\n\n' + missingFields.join('\n'));
+                return;
+            }
+
+            try {
+                // Send to blockchain API
+                const response = await fetch('/api/batches/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(batchData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Show success message
+                document.getElementById('predictedData').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('successMessage').innerHTML = `✅ <strong>Success!</strong> Your batch has been created on the blockchain. ${weight} kg material registered.<br><small>Batch ID: ${result.batchId}<br>Transaction: ${result.transactionHash}</small>`;
+
+                document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+
+            } catch (error) {
+                console.error('Blockchain Error:', error);
+                let errorMessage = 'Error saving data to blockchain: ' + error.message;
+                
+                if (error.message.includes('Not logged in')) {
+                    errorMessage += '\n\n⚠️ You need to login first.\nRedirecting to login page...';
+                    alert(errorMessage);
+                    window.location.href = 'login.html';
+                    return;
+                } else if (error.message.includes('Blockchain not ready')) {
+                    errorMessage += '\n\n⚠️ Blockchain is not ready.\nPlease wait or restart the server.';
+                } else if (error.message.includes('fetch')) {
+                    errorMessage += '\n\n⚠️ Cannot connect to server.\nPlease make sure the server is running.';
+                }
+                
+                alert(errorMessage);
+            }
+
+        // Navigation functions for predicted data sections
+        function nextPredictedSection(section) {
+            // Hide all sections
+            document.querySelectorAll('#predictedData .section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('#predictedData .progress-bar .step').forEach(s => s.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById('section' + section).classList.add('active');
+            const activeStep = document.querySelector(`#predictedData .progress-bar .step[data-step="${section}"]`);
+            if (activeStep) activeStep.classList.add('active');
+
+            // Scroll to top smoothly
+            document.getElementById('predictedData').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function prevPredictedSection(section) {
+            nextPredictedSection(section);
+        }
+
+        // Allow clicking on progress steps to navigate
+        window.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('#predictedData .progress-bar .step').forEach(step => {
+                step.addEventListener('click', function() {
+                    const sectionNum = this.getAttribute('data-step');
+                    nextPredictedSection(sectionNum);
+                });
+            });
+        });
+
+        function logout() {
+            fetch('/api/auth/logout', { method: 'POST' })
+                .then(() => window.location.href = 'login.html')
+                .catch(() => window.location.href = 'login.html');
+        }
+    </script>
+</body>
+
+</html>
