@@ -31,7 +31,7 @@
                 <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
                     Role: <strong id="role-display">-</strong>
                 </div>
-                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px; background: #FF3300; color: white; border-radius: 20px; border: none;">Logout</button>
             </div>
         </aside>
 
@@ -253,14 +253,14 @@
                         <input type="date" id="assetDate">
 
                         <label style="margin-top: 15px;">Production Facility *:</label>
-                        <select id="productionFacility">
+                        <select id="productionFacility" onchange="updateDPP()">
                             <option value="">--Select from Producer Geo Locations--</option>
                             <option value="Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China">Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China</option>
                             <option value="Shanghai Hongda Manufacturing - Shanghai, China">Shanghai Hongda Manufacturing - Shanghai, China</option>
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Main) *:</label>
-                        <select id="valueChainMain">
+                        <select id="valueChainMain" onchange="updateDPP()">
                             <option value="">--Select Value Chain Process (Main)--</option>
                             <option value="Raw Material Extraction">Raw Material Extraction</option>
                             <option value="Raw Material Processing">Raw Material Processing</option>
@@ -269,14 +269,14 @@
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Sub) *:</label>
-                        <select id="valueChainSub">
+                        <select id="valueChainSub" onchange="updateDPP()">
                             <option value="">--Select Value Chain Process (Sub)--</option>
                             <option value="Fabric Weaving">Fabric Weaving</option>
                             <option value="Fabric Knitting">Fabric Knitting</option>
                         </select>
 
                         <label style="margin-top: 15px;">Aware™ Output Token Type:</label>
-                        <input type="text" id="tokenType" placeholder="e.g., Yarn">
+                        <input type="text" id="tokenType" placeholder="e.g., Yarn" onchange="updateDPP()" oninput="updateDPP()">
                     </div>
                     <div class="navigation">
                         <div></div>
@@ -295,7 +295,7 @@
                         <input type="color" id="selectMainColor" style="height: 40px; cursor: pointer;" onchange="updateColorName(this.value)">
 
                         <label style="margin-top: 15px;">Main Color *:</label>
-                        <input type="text" id="mainColor" placeholder="e.g., Orange">
+                        <input type="text" id="mainColor" placeholder="e.g., Orange" onchange="updateDPP()" oninput="updateDPP()">
 
                         <script>
                         function hexToColorName(hex) {
@@ -344,7 +344,7 @@
                         <input type="text" id="batchNo" placeholder="e.g., 77839H8873">
 
                         <label style="margin-top: 15px;">Total Weight of the Products in Kgs(#Tokens) *:</label>
-                        <input type="number" id="totalWeight" placeholder="e.g., 8500">
+                        <input type="number" id="totalWeight" placeholder="e.g., 8500" onchange="updateDPP()" oninput="updateDPP()">
 
                         <label style="margin-top: 15px;">Composition *:</label>
                         <div id="compositionList"></div>
@@ -470,8 +470,7 @@
                     <div class="field-value">
                         <label>Aware™ Asset ID:</label>
                         <input type="text" id="assetId"
-                            placeholder="e.g., tiancheng - Yarn - 16/1s - 100% Organic Silk - Orange - 23443242342"
-                            readonly>
+                            placeholder="e.g., tiancheng - Yarn - 16/1s - 100% Organic Silk - Orange - 23443242342">
 
                         <label style="margin-top: 15px;">Tracer added:</label>
                         <div class="sustainability-toggle">
@@ -553,6 +552,7 @@
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -561,6 +561,9 @@
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">GRS</td>
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">VERIFIED</td>
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">31/08/2026</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                                            <input type="checkbox" class="compliance-checkbox" data-cert="GRS" style="width: 18px; height: 18px; cursor: pointer;">
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -577,6 +580,7 @@
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -585,6 +589,9 @@
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">Social Cer...</td>
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">VERIFIED</td>
                                         <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">01/06/2027</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                                            <input type="checkbox" class="compliance-checkbox" data-cert="FairWear" style="width: 18px; height: 18px; cursor: pointer;">
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -601,11 +608,12 @@
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="4" style="padding: 20px; text-align: center; color: #999;">No Data Available</td>
+                                        <td colspan="5" style="padding: 20px; text-align: center; color: #999;">No Data Available</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1455,6 +1463,7 @@ Now update the fields based on the changes described above.`
             } else {
                 currentData.composition[index][field] = value;
             }
+            updateDPP();
         }
 
         function updateTracerFields() {
@@ -1763,33 +1772,66 @@ Now update the fields based on the changes described above.`
         }
 
         function updateDPP() {
+            if (!currentData) return;
+            
             // Update DPP summary with current data
-            document.getElementById('dppTokenType').textContent = document.getElementById('tokenType').value || '-';
-            document.getElementById('dppAssetId').textContent = document.getElementById('assetId').value || '-';
+            const dppTokenType = document.getElementById('dppTokenType');
+            const dppAssetId = document.getElementById('dppAssetId');
+            const dppComposition = document.getElementById('dppComposition');
+            const dppColor = document.getElementById('dppColor');
+            const dppQuantity = document.getElementById('dppQuantity');
+            const dppTokenCount = document.getElementById('dppTokenCount');
+            const dppVCMain = document.getElementById('dppVCMain');
+            const dppVCSub = document.getElementById('dppVCSub');
+            const dppTracer = document.getElementById('dppTracer');
+            const dppCertificates = document.getElementById('dppCertificates');
+            const dppLocation = document.getElementById('dppLocation');
+            
+            if (dppTokenType) dppTokenType.textContent = document.getElementById('tokenType')?.value || '-';
+            if (dppAssetId) dppAssetId.textContent = document.getElementById('assetId')?.value || '-';
 
             // Composition
             let compositionText = '';
-            currentData.composition.forEach(comp => {
-                compositionText += comp.material + ' ' + comp.percentage + '%, ';
-            });
-            document.getElementById('dppComposition').textContent = compositionText || '-';
+            if (currentData.composition && currentData.composition.length > 0) {
+                compositionText = currentData.composition.map(comp => 
+                    comp.material + ' (' + comp.percentage + '%)'
+                ).join(', ');
+            }
+            if (dppComposition) dppComposition.textContent = compositionText || '-';
 
-            document.getElementById('dppColor').textContent = document.getElementById('mainColor').value || '-';
+            if (dppColor) dppColor.textContent = document.getElementById('mainColor')?.value || '-';
 
-            const weight = document.getElementById('totalWeight').value;
-            document.getElementById('dppQuantity').textContent = weight || '0';
-            document.getElementById('dppTokenCount').textContent = weight || '0';
+            const weight = document.getElementById('totalWeight')?.value;
+            if (dppQuantity) dppQuantity.textContent = weight || '0';
+            if (dppTokenCount) dppTokenCount.textContent = weight || '0';
 
-            const vcMain = document.getElementById('valueChainMain').value;
-            const vcSub = document.getElementById('valueChainSub').value;
-            document.getElementById('dppVCMain').textContent = vcMain || '-';
-            document.getElementById('dppVCSub').textContent = vcSub || '-';
+            const vcMain = document.getElementById('valueChainMain')?.value;
+            const vcSub = document.getElementById('valueChainSub')?.value;
+            if (dppVCMain) dppVCMain.textContent = vcMain || '-';
+            if (dppVCSub) dppVCSub.textContent = vcSub || '-';
+            
+            const productionFacility = document.getElementById('productionFacility')?.value;
+            if (dppLocation) dppLocation.textContent = productionFacility || '-';
 
             const tracerType = document.querySelector('input[name="tracerType"]:checked');
-            document.getElementById('dppTracer').textContent = tracerType ? tracerType.value : '-';
+            if (dppTracer) dppTracer.textContent = tracerType ? tracerType.value : '-';
 
-            document.getElementById('dppCertificates').textContent = currentData.compliances.join(', ') || '-';
+            if (dppCertificates && currentData.compliances) {
+                dppCertificates.textContent = currentData.compliances.join(', ') || '-';
+            }
         }
+        
+        // Auto-update DPP on input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['tokenType', 'assetId', 'mainColor', 'totalWeight', 'valueChainMain', 'valueChainSub', 'productionFacility'];
+            inputs.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.addEventListener('change', updateDPP);
+                    elem.addEventListener('input', updateDPP);
+                }
+            });
+        });
 
         function toggleSustainableClaims() {
             const toggle = document.getElementById('sustainableClaimsToggle');
@@ -1855,6 +1897,11 @@ Now update the fields based on the changes described above.`
                     <label>Select Aware™ Asset ID *:</label>
                     <select style="margin-bottom: 10px;">
                         <option value="">Please select Aware™ Asset ID</option>
+                        <option value="tiancheng-yarn-silk-1736912141681">tiancheng - Yarn - Purple - 1736912141681</option>
+                        <option value="tiancheng-fabric-cotton-1736912089234">tiancheng - Fabric - Natural - 1736912089234</option>
+                        <option value="tiancheng-yarn-blue-1736911892745">tiancheng - Yarn - Light Blue - 1736911892745</option>
+                        <option value="hongda-fiber-white-1736910234567">hongda - Fiber - White - 1736910234567</option>
+                        <option value="hongda-pellet-green-1736909876543">hongda - Pellet - Green - 1736909876543</option>
                     </select>
                     
                     <label>Tokens in Wallet (kgs) *:</label>
@@ -2056,6 +2103,13 @@ Now update the fields based on the changes described above.`
                 document.getElementById('username-display').textContent = currentUser.username;
                 const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
                 document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
+                
+                // Only allow Producer and Admin roles to update batches
+                if (currentUser.role !== 0 && currentUser.role !== 4) {
+                    alert('Access denied. Only producers can update batches.');
+                    window.location.href = 'index.html';
+                    return;
+                }
             } catch (error) {
                 console.error('Auth check error:', error);
                 window.location.href = 'login.html';

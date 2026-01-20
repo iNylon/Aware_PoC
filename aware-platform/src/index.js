@@ -474,6 +474,181 @@ app.post('/api/batches/:id/certify', async (req, res) => {
   }
 });
 
+// ==================== BATCH ENDPOINTS FOR FRONTEND ====================
+
+// Get single batch details
+app.get('/batch/:id', async (req, res) => {
+  try {
+    if (!blockchainReady) {
+      return res.status(503).json({ error: 'Blockchain not ready' });
+    }
+
+    const batchId = parseInt(req.params.id);
+    const batch = await contract.batches(batchId);
+
+    if (!batch.exists) {
+      return res.status(404).json({ error: 'Batch not found' });
+    }
+
+    const approvalInfo = await contract.getBatchApprovalInfo(batchId);
+
+    const formattedBatch = {
+      id: batchId,
+      physicalAsset: {
+        assetId: batch.physicalAsset.assetId,
+        material: batch.physicalAsset.material,
+        composition: batch.physicalAsset.composition,
+        weight: batch.physicalAsset.weight,
+        color: batch.physicalAsset.color || '#CCCCCC',
+        batchNumber: batch.physicalAsset.batchNumber,
+        productionDate: batch.physicalAsset.productionDate,
+        expiryDate: batch.physicalAsset.expiryDate
+      },
+      tracer: {
+        supplier: batch.tracer.supplier,
+        farmLocation: batch.tracer.farmLocation,
+        country: batch.tracer.country,
+        gpsCoordinates: batch.tracer.gpsCoordinates,
+        certifications: batch.tracer.certifications,
+        harvestDate: batch.tracer.harvestDate
+      },
+      validation: {
+        qualityGrade: batch.validation.qualityGrade,
+        moistureContent: batch.validation.moistureContent,
+        contamination: batch.validation.contamination,
+        inspectionDate: batch.validation.inspectionDate,
+        inspector: batch.validation.inspector,
+        labResults: batch.validation.labResults
+      },
+      compliance: {
+        regulatoryStandards: batch.compliance.regulatoryStandards,
+        sustainabilityCert: batch.compliance.sustainabilityCert,
+        fairTradeCert: batch.compliance.fairTradeCert,
+        organicCert: batch.compliance.organicCert,
+        carbonFootprint: batch.compliance.carbonFootprint,
+        waterUsage: batch.compliance.waterUsage
+      },
+      createdBy: batch.createdBy,
+      createdByName: batch.createdByName,
+      createdByRole: Number(batch.createdByRole),
+      createdAt: Number(batch.createdAt),
+      status: Number(batch.status),
+      approvedBy: approvalInfo[0],
+      approvedByName: approvalInfo[1],
+      approvedAt: Number(approvalInfo[2]),
+      rejectionReason: approvalInfo[3],
+      certifiedBy: batch.certifiedBy,
+      certifiedByName: batch.certifiedByName,
+      certifiedAt: Number(batch.certifiedAt),
+      certificationHash: batch.certificationHash || '',
+      exists: batch.exists
+    };
+
+    res.json(formattedBatch);
+  } catch (error) {
+    console.error('Get batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve batch (alternative route)
+app.post('/batch/:id/approve', async (req, res) => {
+  try {
+    if (!blockchainReady) {
+      return res.status(503).json({ error: 'Blockchain not ready' });
+    }
+
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const batchId = parseInt(req.params.id);
+    const userWallet = userWallets.get(req.session.user.username);
+
+    if (!userWallet) {
+      return res.status(500).json({ error: 'Wallet not found' });
+    }
+
+    const contractWithSigner = contract.connect(userWallet.wallet);
+    const tx = await contractWithSigner.approveBatch(batchId);
+    const receipt = await tx.wait();
+
+    res.json({
+      success: true,
+      transactionHash: receipt.hash
+    });
+  } catch (error) {
+    console.error('Approve batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reject batch (alternative route)
+app.post('/batch/:id/reject', async (req, res) => {
+  try {
+    if (!blockchainReady) {
+      return res.status(503).json({ error: 'Blockchain not ready' });
+    }
+
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const batchId = parseInt(req.params.id);
+    const { reason } = req.body;
+    const userWallet = userWallets.get(req.session.user.username);
+
+    if (!userWallet) {
+      return res.status(500).json({ error: 'Wallet not found' });
+    }
+
+    const contractWithSigner = contract.connect(userWallet.wallet);
+    const tx = await contractWithSigner.rejectBatch(batchId, reason || 'No reason provided');
+    const receipt = await tx.wait();
+
+    res.json({
+      success: true,
+      transactionHash: receipt.hash
+    });
+  } catch (error) {
+    console.error('Reject batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Certify batch (alternative route)
+app.post('/batch/:id/certify', async (req, res) => {
+  try {
+    if (!blockchainReady) {
+      return res.status(503).json({ error: 'Blockchain not ready' });
+    }
+
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const batchId = parseInt(req.params.id);
+    const { certificationHash } = req.body;
+    const userWallet = userWallets.get(req.session.user.username);
+
+    if (!userWallet) {
+      return res.status(500).json({ error: 'Wallet not found' });
+    }
+
+    const contractWithSigner = contract.connect(userWallet.wallet);
+    const tx = await contractWithSigner.certifyBatch(batchId, certificationHash || '');
+    const receipt = await tx.wait();
+
+    res.json({
+      success: true,
+      transactionHash: receipt.hash
+    });
+  } catch (error) {
+    console.error('Certify batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== AI ENDPOINT (keep Ollama) ====================
 
 app.post('/api/predict', async (req, res) => {

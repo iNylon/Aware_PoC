@@ -17,7 +17,7 @@
         <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
         AWARE™
       </div>
-      <div class="nav">
+      <div class="nav" id="sidebar-nav">
         <a href="index.html" class="active">Home</a>
         <a href="create_token.html">Create Token</a>
         <a href="update_token.html">Update Token</a>
@@ -29,7 +29,7 @@
         <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
           Role: <strong id="role-display">-</strong>
         </div>
-        <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
+        <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px; background: #FF3300; color: white; border-radius: 20px; border: none;">Logout</button>
       </div>
     </aside>
 
@@ -102,24 +102,8 @@
           </div>
 
           <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">Quick Actions</h3>
-          <div class="cards">
-            <a class="card create" href="create_token.html">
-              <div class="badge">＋</div>
-              <div>
-                <h2>Create Batch</h2>
-                <p>Create new batches on the blockchain with complete traceability data.</p>
-                <div class="cta">Create New Batch <span aria-hidden="true">→</span></div>
-              </div>
-            </a>
-
-            <a class="card create" href="batch_approve.html">
-              <div class="badge">✓</div>
-              <div>
-                <h2>Approve Batches</h2>
-                <p>Review and approve pending batches or certify approved ones.</p>
-                <div class="cta">Review Batches <span aria-hidden="true">→</span></div>
-              </div>
-            </a>
+          <div class="cards" id="quick-actions">
+            <!-- Will be populated based on user role -->
           </div>
 
           <div class="hint">
@@ -167,6 +151,10 @@
         currentUser = data.user;
         document.getElementById('username-display').textContent = currentUser.username;
         document.getElementById('role-display').textContent = ROLE_LABELS[currentUser.role] || 'Unknown';
+        
+        // Update UI based on role
+        updateSidebarForRole();
+        updateUIForRole();
       } catch (error) {
         console.error('Auth check error:', error);
         window.location.href = 'login.html';
@@ -371,10 +359,6 @@
             ${batch.certificationHash ? `<div style="margin-bottom: 8px;"><strong>Certification Hash:</strong> <code style="font-size: 11px;">${batch.certificationHash}</code></div>` : ''}
           </div>
         </div>
-
-        <div style="margin-top: 20px; text-align: center;">
-          <button onclick="closeBatchModal()" class="btn-secondary">Close</button>
-        </div>
       `;
 
       document.getElementById('batchModalContent').innerHTML = content;
@@ -385,6 +369,139 @@
       if (!event || event.target.id === 'batchModal') {
         document.getElementById('batchModal').style.display = 'none';
       }
+    }
+
+    function updateSidebarForRole() {
+      const sidebarNav = document.getElementById('sidebar-nav');
+      if (!currentUser) return;
+
+      const ROLES = {
+        PRODUCER: 0,
+        MANUFACTURER: 1,
+        DISTRIBUTOR: 2,
+        CERTIFIER: 3,
+        ADMIN: 4
+      };
+
+      let navHtml = '<a href="index.html" class="active">Home</a>';
+
+      // Producer can create and update batches
+      if (currentUser.role === ROLES.PRODUCER) {
+        navHtml += `
+          <a href="create_token.html">Create Token</a>
+          <a href="update_token.html">Update Token</a>
+        `;
+      }
+
+      // Manager (Certifier) can only approve
+      if (currentUser.role === ROLES.CERTIFIER) {
+        navHtml += '<a href="batch_approve.html">Approve Batches</a>';
+      }
+
+      // Brand (Distributor) can only approve/view
+      if (currentUser.role === ROLES.DISTRIBUTOR) {
+        navHtml += '<a href="batch_approve.html">Approve Batches</a>';
+      }
+
+      // Admin has all options
+      if (currentUser.role === ROLES.ADMIN) {
+        navHtml += `
+          <a href="create_token.html">Create Token</a>
+          <a href="update_token.html">Update Token</a>
+          <a href="batch_approve.html">Approve Batches</a>
+        `;
+      }
+
+      sidebarNav.innerHTML = navHtml;
+    }
+
+    function updateUIForRole() {
+      const quickActions = document.getElementById('quick-actions');
+      if (!currentUser) return;
+
+      const ROLES = {
+        PRODUCER: 0,
+        MANUFACTURER: 1,
+        DISTRIBUTOR: 2,
+        CERTIFIER: 3,
+        ADMIN: 4
+      };
+
+      let actionsHtml = '';
+
+      // Producer can create and update batches
+      if (currentUser.role === ROLES.PRODUCER) {
+        actionsHtml = `
+          <a class="card create" href="create_token.html">
+            <div class="badge">＋</div>
+            <div>
+              <h2>Create Batch</h2>
+              <p>Create new batches on the blockchain with complete traceability data.</p>
+              <div class="cta">Create New Batch <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+          <a class="card create" href="update_token.html">
+            <div class="badge">✎</div>
+            <div>
+              <h2>Update Batch</h2>
+              <p>Update existing batches with new information.</p>
+              <div class="cta">Update Batch <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+        `;
+      }
+
+      // Manager (Certifier) can only approve/decline
+      if (currentUser.role === ROLES.CERTIFIER) {
+        actionsHtml = `
+          <a class="card create" href="batch_approve.html">
+            <div class="badge">✓</div>
+            <div>
+              <h2>Approve Batches</h2>
+              <p>Review and approve pending batches or certify approved ones.</p>
+              <div class="cta">Review Batches <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+        `;
+      }
+
+      // Brand (Distributor) can approve/view batches
+      if (currentUser.role === ROLES.DISTRIBUTOR) {
+        actionsHtml = `
+          <a class="card create" href="batch_approve.html">
+            <div class="badge">✓</div>
+            <div>
+              <h2>Approve Batches</h2>
+              <p>Review and approve batches from producers.</p>
+              <div class="cta">Review Batches <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+        `;
+      }
+
+      // Admin has all actions
+      if (currentUser.role === ROLES.ADMIN) {
+        actionsHtml = `
+          <a class="card create" href="create_token.html">
+            <div class="badge">＋</div>
+            <div>
+              <h2>Create Batch</h2>
+              <p>Create new batches on the blockchain with complete traceability data.</p>
+              <div class="cta">Create New Batch <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+          <a class="card create" href="batch_approve.html">
+            <div class="badge">✓</div>
+            <div>
+              <h2>Approve Batches</h2>
+              <p>Review and approve pending batches or certify approved ones.</p>
+              <div class="cta">Review Batches <span aria-hidden="true">→</span></div>
+            </div>
+          </a>
+        `;
+      }
+
+      quickActions.innerHTML = actionsHtml;
     }
   </script>
 </body>

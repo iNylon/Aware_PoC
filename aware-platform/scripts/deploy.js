@@ -55,11 +55,9 @@ async function main() {
   
   // Register users with different roles (username, password, role)
   const testUsers = [
-    { username: "producer1", password: "test123", role: 0, account: 1 }, // Producer
-    { username: "manufacturer1", password: "test123", role: 1, account: 2 }, // Manufacturer
-    { username: "distributor1", password: "test123", role: 2, account: 3 }, // Distributor
-    { username: "certifier1", password: "test123", role: 3, account: 4 }, // Certifier
-    { username: "admin1", password: "test123", role: 4, account: 5 }  // Admin
+    { username: "producer1", password: "test123", role: 0, account: 1 }, // Producer - can create/update batches
+    { username: "manager1", password: "test123", role: 3, account: 2 }, // Certifier - can approve/decline batches
+    { username: "brand1", password: "test123", role: 2, account: 3 }  // Distributor - read-only
   ];
   
   for (const user of testUsers) {

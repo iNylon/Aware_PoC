@@ -30,7 +30,7 @@
                 <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
                     Role: <strong id="role-display">-</strong>
                 </div>
-                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px; background: #FF3300; color: white; border-radius: 20px; border: none;">Logout</button>
             </div>
         </aside>
 
@@ -188,14 +188,14 @@
                         <input type="date" id="assetDate">
 
                         <label style="margin-top: 15px;">Production Facility *:</label>
-                        <select id="productionFacility">
+                        <select id="productionFacility" onchange="updateDPP()">
                             <option value="">--Select from Producer Geo Locations--</option>
                             <option value="Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China">Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China</option>
                             <option value="Shanghai Hongda Manufacturing - Shanghai, China">Shanghai Hongda Manufacturing - Shanghai, China</option>
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Main) *:</label>
-                        <select id="valueChainMain">
+                        <select id="valueChainMain" onchange="updateDPP()">
                             <option value="">--Select Value Chain Process (Main)--</option>
                             <option value="Raw Material Extraction">Raw Material Extraction</option>
                             <option value="Raw Material Processing">Raw Material Processing</option>
@@ -204,14 +204,14 @@
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Sub) *:</label>
-                        <select id="valueChainSub">
+                        <select id="valueChainSub" onchange="updateDPP()">
                             <option value="">--Select Value Chain Process (Sub)--</option>
                             <option value="Fabric Weaving">Fabric Weaving</option>
                             <option value="Fabric Knitting">Fabric Knitting</option>
                         </select>
 
                         <label style="margin-top: 15px;">Aware™ Token Type:</label>
-                        <input type="text" id="tokenType" placeholder="e.g., Yarn">
+                        <input type="text" id="tokenType" placeholder="e.g., Yarn" onchange="updateDPP()" oninput="updateDPP()">
 
                         <label style="margin-top: 15px;">Material Specification *:</label>
                         <input type="text" id="materialSpec" placeholder="e.g., 16/1s">
@@ -220,7 +220,7 @@
                         <input type="color" id="selectMainColor" style="height: 40px; cursor: pointer;" onchange="updateColorName(this.value)">
 
                         <label style="margin-top: 15px;">Main Color *:</label>
-                        <input type="text" id="mainColor" placeholder="e.g., Orange">
+                        <input type="text" id="mainColor" placeholder="e.g., Orange" onchange="updateDPP()" oninput="updateDPP()">
 
                         <label style="margin-top: 15px;">Production Lot/ Batch No. *:</label>
                         <input type="text" id="batchNo" placeholder="e.g., 77839H8873">
@@ -230,7 +230,7 @@
                         <button class="add-btn" onclick="addComposition()" style="margin-top: 10px;">+ Add Composition</button>
 
                         <label style="margin-top: 15px;">Total Weight of the Products in Kgs(#Tokens) *:</label>
-                        <input type="number" id="totalWeight" placeholder="e.g., 8500">
+                        <input type="number" id="totalWeight" placeholder="e.g., 8500" onchange="updateDPP()" oninput="updateDPP()">
 
                         <label style="margin-top: 15px;">Sustainable Process Claims:</label>
                         <div class="sustainability-toggle">
@@ -271,8 +271,7 @@
                     <div class="field-value">
                         <label>Aware™ Asset ID:</label>
                         <input type="text" id="assetId"
-                            placeholder="e.g., tiancheng - Yarn - 16/1s - 100% Organic Silk - Orange - 23443242342"
-                            readonly>
+                            placeholder="e.g., tiancheng - Yarn - 16/1s - 100% Organic Silk - Orange - 23443242342">
 
                         <label style="margin-top: 15px;">Tracer added:</label>
                         <div class="sustainability-toggle">
@@ -514,6 +513,13 @@
                 document.getElementById('username-display').textContent = currentUser.username;
                 const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
                 document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
+                
+                // Only allow Producer and Admin roles to create batches
+                if (currentUser.role !== 0 && currentUser.role !== 4) {
+                    alert('Access denied. Only producers can create batches.');
+                    window.location.href = 'index.html';
+                    return;
+                }
             } catch (error) {
                 console.error('Auth check error:', error);
                 window.location.href = 'login.html';
@@ -1306,6 +1312,7 @@ Now update the fields based on the changes described above.`
             } else {
                 currentData.composition[index][field] = value;
             }
+            updateDPP();
         }
 
         function updateTracerFields() {
@@ -1739,12 +1746,17 @@ Now update the fields based on the changes described above.`
             // Build certifications string
             const certificationsStr = currentData.compliances.join(', ') || 'None';
 
+            // Get selected compliance checkboxes
+            const selectedCompliances = Array.from(document.querySelectorAll('.compliance-checkbox:checked'))
+                .map(cb => cb.getAttribute('data-cert'));
+
             // Prepare blockchain batch data structure
             const batchData = {
                 physicalAsset: {
                     assetId: document.getElementById('assetId').value || 'asset-' + Date.now(),
                     material: document.getElementById('tokenType').value || 'Yarn',
                     composition: compositionStr,
+                    color: document.getElementById('mainColor').value || '',
                     weight: weight + ' kg',
                     batchNumber: document.getElementById('batchNo').value || 'BATCH-' + Date.now(),
                     productionDate: document.getElementById('assetDate').value || new Date().toISOString().split('T')[0],
@@ -1763,14 +1775,14 @@ Now update the fields based on the changes described above.`
                     moistureContent: '', // Not in current form
                     contamination: '', // Not in current form
                     inspectionDate: new Date().toISOString().split('T')[0],
-                    inspector: 'Self-Validated',
-                    labResults: 'Pending'
+                    inspector: 'Self-Validation', // Type of validation
+                    labResults: '' // Not used anymore
                 },
                 compliance: {
-                    regulatoryStandards: 'ISO 9001',
-                    sustainabilityCert: currentData.compliances.includes('Organic') ? 'Organic' : 'None',
-                    fairTradeCert: currentData.compliances.includes('Fair Trade') ? 'Fair Trade' : 'None',
-                    organicCert: currentData.compliances.includes('Organic') ? 'Yes' : 'No',
+                    regulatoryStandards: '',
+                    sustainabilityCert: selectedCompliances.includes('GRS') ? 'GRS' : '',
+                    fairTradeCert: selectedCompliances.includes('FairWear') ? 'FairWear' : '',
+                    organicCert: '',
                     carbonFootprint: '', // Could be calculated
                     waterUsage: '' // Not in current form
                 }

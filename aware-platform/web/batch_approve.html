@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve Batches - Aware™</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="aware-style.css">
+    <script src="batches.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
+                AWARE™
+            </div>
+            <div class="nav">
+                <a href="index.html">Home</a>
+                <a href="batch_approve.html" class="active">Approve Batches</a>
+            </div>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
+                    Logged in as: <strong id="username-display">-</strong>
+                </div>
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
+                    Role: <strong id="role-display">-</strong>
+                </div>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px; background: #FF3300; color: white; border-radius: 20px; border: none;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="topbar-inner">
+                    <div class="page-head">
+                        <div>
+                            <h1>Approve Batches</h1>
+                            <p>Review and approve or decline pending batches.</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="container">
+                <!-- Batches Table -->
+                <div class="card">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">All Batches</h2>
+                    </div>
+                    <div class="batch-table-container">
+                        <table class="batch-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Color</th>
+                                    <th>Asset ID</th>
+                                    <th>Weight Kgs</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batches-tbody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Batch Details Modal -->
+    <div id="approveModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeApproveModal(event)">
+        <div style="max-width: 800px; margin: 40px auto; background: white; border-radius: 12px; padding: 30px; position: relative;" onclick="event.stopPropagation()">
+            <button onclick="closeApproveModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);">&times;</button>
+            <div id="approveModalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // ROLES and ROLE_LABELS are defined in batches.js
+        let currentUser = null;
+        let currentBatch = null;
+
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch('/api/auth/session', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (!data.loggedIn) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                currentUser = data.user;
+                document.getElementById('username-display').textContent = currentUser.username;
+                document.getElementById('role-display').textContent = ROLE_LABELS[currentUser.role] || 'Unknown';
+
+                // Only allow Manager (Certifier=3), Distributor (Brand=2) and Admin (4) roles
+                if (currentUser.role !== 3 && currentUser.role !== 2 && currentUser.role !== 4) {
+                    alert('Access denied. This page is only for managers and brand users.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                loadBatches();
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadBatches() {
+            try {
+                const batches = await loadBatchesGlobally();
+                renderBatchTable(batches, 'batches-tbody', 'showBatchDetails');
+            } catch (error) {
+                console.error('Error loading batches:', error);
+            }
+        }
+
+        function showBatchDetails(batchId) {
+            fetch('/batch/' + batchId, {
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(batch => {
+                currentBatch = batch;
+                displayBatchDetails(batch);
+            })
+            .catch(error => {
+                console.error('Error loading batch details:', error);
+                alert('Failed to load batch details: ' + error.message);
+            });
+        }
+
+        function displayBatchDetails(batch) {
+            const canApprove = batch.status === 0; // Only pending batches can be approved/rejected
+
+            // Helper function to show field only if it has value
+            const showField = (label, value) => {
+                if (value && value !== 'N/A' && value.trim() !== '') {
+                    return `<div style="margin-bottom: 8px;"><strong>${label}:</strong> ${value}</div>`;
+                }
+                return '';
+            };
+
+            let actionsHtml = '';
+            if (canApprove) {
+                actionsHtml = `
+                    <div style="margin-top: 24px;">
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button onclick="approveBatch()" style="
+                                padding: 14px 40px;
+                                background: #22c55e;
+                                color: white;
+                                border: none;
+                                border-radius: 24px;
+                                font-size: 15px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+                                transition: all 0.2s;
+                            " onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'">
+                                Approve Batch
+                            </button>
+                            <button onclick="showRejectForm()" style="
+                                padding: 14px 40px;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                border-radius: 24px;
+                                font-size: 15px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+                                transition: all 0.2s;
+                            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                                Decline Batch
+                            </button>
+                        </div>
+                        <div id="rejectForm" style="display: none; margin-top: 16px;">
+                            <textarea id="rejectionReason" placeholder="Enter rejection reason..." style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; margin-bottom: 10px;"></textarea>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="rejectBatch()" style="
+                                    padding: 12px 32px;
+                                    background: #ef4444;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 20px;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                ">Confirm Rejection</button>
+                                <button onclick="hideRejectForm()" style="
+                                    padding: 12px 32px;
+                                    background: #6b7280;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 20px;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                ">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const content = `
+                <h2 style="margin-bottom: 24px;">Batch #${batch.id} Details</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Physical Asset -->
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📦 Physical Asset</h3>
+                        <div style="font-size: 13px;">
+                            ${showField('Date', batch.physicalAsset.productionDate)}
+                            ${showField('Aware™ Asset ID', batch.physicalAsset.assetId)}
+                            ${showField('Material', batch.physicalAsset.material)}
+                            ${showField('Composition', batch.physicalAsset.composition)}
+                            ${batch.physicalAsset.color ? '<div style="margin-bottom: 8px;"><strong>Color:</strong> <span class="color-box" style="background-color: ' + batch.physicalAsset.color + '; display: inline-block; width: 16px; height: 16px; border-radius: 3px; margin-right: 6px; vertical-align: middle; border: 1px solid #ddd;"></span>' + batch.physicalAsset.color + '</div>' : ''}
+                            ${showField('Total Weight (Kgs)', batch.physicalAsset.weight)}
+                            ${showField('Batch Number', batch.physicalAsset.batchNumber)}
+                            ${showField('Supplier', batch.tracer.supplier)}
+                        </div>
+                    </div>
+
+                    <!-- Tracer -->
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
+                        <div style="font-size: 13px;">
+                            ${showField('Aware™ Asset ID', batch.physicalAsset.assetId)}
+                            ${showField('Tracer Added', batch.tracer.certifications ? 'Yes' : 'No')}
+                            ${showField('Farm Location', batch.tracer.farmLocation)}
+                            ${showField('Country', batch.tracer.country)}
+                            ${showField('GPS Coordinates', batch.tracer.gpsCoordinates)}
+                            ${showField('Certifications', batch.tracer.certifications)}
+                            ${showField('Harvest Date', batch.tracer.harvestDate)}
+                            ${!batch.physicalAsset.assetId && !batch.tracer.farmLocation && !batch.tracer.country && !batch.tracer.gpsCoordinates && !batch.tracer.certifications && !batch.tracer.harvestDate ? '<div style="color: var(--muted); font-style: italic;">No tracer information provided</div>' : ''}
+                        </div>
+                    </div>
+
+                    <!-- Validation -->
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">✓ Validation</h3>
+                        <div style="font-size: 13px;">
+                            ${showField('Validation Type', batch.validation.inspector || 'Self-Validation')}
+                            ${showField('Quality Grade', batch.validation.qualityGrade)}
+                            ${showField('Moisture Content', batch.validation.moistureContent)}
+                            ${showField('Contamination', batch.validation.contamination)}
+                            ${showField('Inspection Date', batch.validation.inspectionDate)}
+                            ${!batch.validation.qualityGrade && !batch.validation.moistureContent && !batch.validation.contamination && !batch.validation.inspectionDate && !batch.validation.inspector ? '<div style="color: var(--muted); font-style: italic;">No validation data provided</div>' : ''}
+                        </div>
+                    </div>
+
+                    <!-- Compliance -->
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📋 Company Compliances</h3>
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 8px;"><strong>🌿 Environmental:</strong> ${batch.compliance.sustainabilityCert || 'None'}</div>
+                            <div style="margin-bottom: 8px;"><strong>🤝 Social:</strong> ${batch.compliance.fairTradeCert || 'None'}</div>
+                            <div style="margin-bottom: 8px;"><strong>🧪 Chemical:</strong> None</div>
+                            ${showField('Carbon Footprint', batch.compliance.carbonFootprint)}
+                            ${showField('Water Usage', batch.compliance.waterUsage)}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Information -->
+                <div class="card" style="padding: 20px; margin-top: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">ℹ️ Batch Status</h3>
+                    <div style="font-size: 13px;">
+                        <div style="margin-bottom: 8px;"><strong>Status:</strong> ${getStatusBadge(batch.status)}</div>
+                        <div style="margin-bottom: 8px;"><strong>Created By:</strong> ${batch.createdByName} (${ROLE_LABELS[batch.createdByRole]})</div>
+                        <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateTime(batch.createdAt)}</div>
+                        ${batch.approvedByName ? '<div style="margin-bottom: 8px;"><strong>Approved By:</strong> ' + batch.approvedByName + '</div>' : ''}
+                        ${batch.approvedAt > 0 ? '<div style="margin-bottom: 8px;"><strong>Approved:</strong> ' + formatDateTime(batch.approvedAt) + '</div>' : ''}
+                        ${batch.rejectionReason ? '<div style="margin-bottom: 8px;"><strong>Rejection Reason:</strong> ' + batch.rejectionReason + '</div>' : ''}
+                        ${batch.certifiedByName ? '<div style="margin-bottom: 8px;"><strong>Certified By:</strong> ' + batch.certifiedByName + '</div>' : ''}
+                        ${batch.certifiedAt > 0 ? '<div style="margin-bottom: 8px;"><strong>Certified:</strong> ' + formatDateTime(batch.certifiedAt) + '</div>' : ''}
+                        ${batch.certificationHash ? '<div style="margin-bottom: 8px;"><strong>Certification Hash:</strong> <code style="font-size: 11px;">' + batch.certificationHash + '</code></div>' : ''}
+                    </div>
+                </div>
+
+                ${actionsHtml}
+            `;
+
+            document.getElementById('approveModalContent').innerHTML = content;
+            document.getElementById('approveModal').style.display = 'block';
+        }
+
+        function showRejectForm() {
+            document.getElementById('rejectForm').style.display = 'block';
+        }
+
+        function hideRejectForm() {
+            document.getElementById('rejectForm').style.display = 'none';
+            document.getElementById('rejectionReason').value = '';
+        }
+
+        async function approveBatch() {
+            if (!currentBatch) return;
+
+            try {
+                const response = await fetch('/batch/' + currentBatch.id + '/approve', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to approve batch');
+                }
+
+                alert('Batch approved successfully!');
+                closeApproveModal();
+                loadBatches();
+            } catch (error) {
+                console.error('Error approving batch:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function rejectBatch() {
+            if (!currentBatch) return;
+
+            const reason = document.getElementById('rejectionReason').value.trim();
+            if (!reason) {
+                alert('Please enter a rejection reason');
+                return;
+            }
+
+            try {
+                const response = await fetch('/batch/' + currentBatch.id + '/reject', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to reject batch');
+                }
+
+                alert('Batch rejected successfully!');
+                closeApproveModal();
+                loadBatches();
+            } catch (error) {
+                console.error('Error rejecting batch:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function certifyBatch() {
+            if (!currentBatch) return;
+
+            const certHash = document.getElementById('certificationHash').value.trim();
+            if (!certHash) {
+                alert('Please enter a certification hash');
+                return;
+            }
+
+            try {
+                const response = await fetch('/batch/' + currentBatch.id + '/certify', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ certificationHash: certHash })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to certify batch');
+                }
+
+                alert('Batch certified successfully!');
+                closeApproveModal();
+                loadBatches();
+            } catch (error) {
+                console.error('Error certifying batch:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function closeApproveModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('approveModal').style.display = 'none';
+            currentBatch = null;
+            hideRejectForm();
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(Number(timestamp) * 1000);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getStatusBadge(status) {
+            const statusLabels = {
+                0: 'Pending',
+                1: 'Approved',
+                2: 'Rejected',
+                3: 'Certified'
+            };
+            const statusClasses = {
+                0: 'status-pending',
+                1: 'status-approved',
+                2: 'status-rejected',
+                3: 'status-certified'
+            };
+            const label = statusLabels[status] || 'Unknown';
+            const className = statusClasses[status] || '';
+            return '<span class="status-badge ' + className + '">' + label + '</span>';
+        }
+
+        function logout() {
+            fetch('http://localhost:3000/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(function() {
+                window.location.href = 'login.html';
+            });
+        }
+    </script>
+</body>
+
+</html>
