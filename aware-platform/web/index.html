@@ -20,7 +20,7 @@
       <div class="nav">
         <a href="index.html" class="active">Home</a>
         <a href="create_token.html">Create Token</a>
-        <a href="update_token.html">Manage Batches</a>
+        <a href="update_token.html">Update Token</a>
       </div>
       <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
         <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
@@ -49,15 +49,23 @@
             <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">📦 All Blockchain Batches</h3>
             
             <div class="filter-bar">
-              <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID, Material, Supplier..." oninput="filterDisplayedBatches()">
+              <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..." oninput="filterDisplayedBatches()">
+              <select id="compositionFilter" onchange="filterDisplayedBatches()">
+                <option value="">Filter by Composition</option>
+                <option value="Organic Silk">Organic Silk</option>
+                <option value="Recycled Cotton">Recycled Cotton</option>
+                <option value="Conventional Cotton">Conventional Cotton</option>
+                <option value="Regenerative Cotton">Regenerative Cotton</option>
+                <option value="Organic Cotton">Organic Cotton</option>
+                <option value="Recycled Polyester">Recycled Polyester</option>
+              </select>
               <select id="statusFilter" onchange="filterDisplayedBatches()">
-                <option value="">All Statuses</option>
+                <option value="">Filter by Status</option>
                 <option value="0">Pending</option>
                 <option value="1">Approved</option>
                 <option value="2">Rejected</option>
                 <option value="3">Certified</option>
               </select>
-              <button class="btn-primary" onclick="loadBatchesFromBlockchain()">🔄 Refresh</button>
             </div>
 
             <div id="loading-message" style="text-align: center; padding: 40px; color: var(--muted);">
@@ -69,16 +77,13 @@
                 <table class="batch-table" id="batchTable">
                   <thead>
                     <tr>
-                      <th>ID</th>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Color</th>
                       <th>Asset ID</th>
-                      <th>Material</th>
-                      <th>Weight</th>
-                      <th>Supplier</th>
-                      <th>Country</th>
-                      <th>Created By</th>
-                      <th>Created</th>
+                      <th>Weight Kgs</th>
                       <th>Status</th>
-                      <th>Actions</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody id="batchTableBody">
@@ -210,6 +215,7 @@
     function filterDisplayedBatches() {
       const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
       const statusFilter = document.getElementById('statusFilter').value;
+      const compositionFilter = document.getElementById('compositionFilter').value;
 
       filteredBatches = allBatches.filter(batch => {
         const matchesSearch = !searchTerm || (
@@ -221,8 +227,10 @@
         );
 
         const matchesStatus = !statusFilter || batch.status === parseInt(statusFilter);
+        
+        const matchesComposition = !compositionFilter || batch.physicalAsset.material === compositionFilter;
 
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesStatus && matchesComposition;
       });
 
       currentPage = 1;
@@ -230,17 +238,15 @@
     }
 
     function displayPage() {
-      const tbody = document.getElementById('batchTableBody');
-      tbody.innerHTML = '';
-
       const startIndex = (currentPage - 1) * batchesPerPage;
       const endIndex = startIndex + batchesPerPage;
       const batchesToShow = filteredBatches.slice(startIndex, endIndex);
 
       if (batchesToShow.length === 0) {
+        const tbody = document.getElementById('batchTableBody');
         tbody.innerHTML = `
           <tr>
-            <td colspan="10" style="text-align: center; padding: 40px; color: var(--muted);">
+            <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
               No batches match your search criteria.
             </td>
           </tr>
@@ -248,27 +254,7 @@
         return;
       }
 
-      batchesToShow.forEach((batch) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${batch.id}</td>
-          <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${batch.physicalAsset.assetId}">
-            ${batch.physicalAsset.assetId || 'N/A'}
-          </td>
-          <td>${batch.physicalAsset.material || 'N/A'}</td>
-          <td>${batch.physicalAsset.weight || 'N/A'}</td>
-          <td>${batch.tracer.supplier || 'N/A'}</td>
-          <td>${batch.tracer.country || 'N/A'}</td>
-          <td>${batch.createdByName || 'Unknown'}</td>
-          <td>${formatDate(batch.createdAt)}</td>
-          <td>${getStatusBadge(batch.status)}</td>
-          <td>
-            <button class="select-btn" onclick="viewBatchDetails(${batch.id})">View</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
+      renderBatchTable(batchesToShow, 'batchTableBody', 'viewBatchDetails');
       updatePagination();
     }
 

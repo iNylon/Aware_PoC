@@ -100,19 +100,46 @@
             border-left: 4px solid #4caf50;
             color: #2e7d32;
         }
+
+        /* Ensure consistent input styling */
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            outline: none;
+            border-color: var(--scarlet);
+            box-shadow: 0 0 0 3px rgba(255, 51, 0, 0.1);
+        }
+
+        /* Round submit buttons */
+        button[type="submit"] {
+            border-radius: 8px !important;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 51, 0, 0.3);
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo-section">
-            <img src="aware-logo.png" alt="AWARE">
+            <img src="aware-logo-black.png" alt="AWARE">
             <h1>AWARE™</h1>
             <p>Blockchain Supply Chain Platform</p>
-        </div>
-
-        <div class="tabs">
-            <button class="active" onclick="showTab('login')">Login</button>
-            <button onclick="showTab('register')">Register</button>
         </div>
 
         <div id="alert-container"></div>
@@ -131,41 +158,6 @@
                 </div>
 
                 <button type="submit" class="btn-primary" style="width: 100%;">Login</button>
-            </form>
-        </div>
-
-        <!-- Register Form -->
-        <div id="register-section" class="form-section">
-            <form onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label>Username:</label>
-                    <input type="text" id="register-username" required>
-                    <small style="color: var(--muted); display: block; margin-top: 4px;">
-                        Choose a unique username
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" id="register-password" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Role:</label>
-                    <select id="register-role" required>
-                        <option value="">Select your role...</option>
-                        <option value="0">Producer</option>
-                        <option value="1">Manufacturer</option>
-                        <option value="2">Distributor</option>
-                        <option value="3">Certifier</option>
-                        <option value="4">Admin</option>
-                    </select>
-                    <small style="color: var(--muted); display: block; margin-top: 4px;">
-                        Your role determines your permissions in the system
-                    </small>
-                </div>
-
-                <button type="submit" class="btn-primary" style="width: 100%;">Register</button>
             </form>
         </div>
 
@@ -192,19 +184,6 @@
                 console.error('Session check error:', error);
             }
         });
-
-        function showTab(tab) {
-            // Update tabs
-            document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
-            // Update sections
-            document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
-            document.getElementById(tab + '-section').classList.add('active');
-
-            // Clear alerts
-            document.getElementById('alert-container').innerHTML = '';
-        }
 
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
@@ -250,46 +229,6 @@
             } catch (error) {
                 console.error('Login error:', error);
                 showAlert('Network error. Please check if the server is running.', 'error');
-            }
-        }
-
-        async function handleRegister(event) {
-            event.preventDefault();
-
-            const username = document.getElementById('register-username').value;
-            const password = document.getElementById('register-password').value;
-            const role = parseInt(document.getElementById('register-role').value);
-
-            if (password.length < 4) {
-                showAlert('Password must be at least 4 characters', 'error');
-                return;
-            }
-
-            try {
-                showAlert('Creating blockchain account... This may take a few seconds.', 'success');
-
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, role })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert(`Registration successful! Your blockchain address: ${data.address}`, 'success');
-                    setTimeout(() => {
-                        showTab('login');
-                        document.getElementById('login-username').value = username;
-                        document.getElementById('login-password').value = password;
-                        showAlert('Now you can login with your credentials', 'success');
-                    }, 2000);
-                } else {
-                    showAlert(data.error || 'Registration failed', 'error');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                showAlert('Network error. Please check if the blockchain is running.', 'error');
             }
         }
     </script>

@@ -82,8 +82,9 @@ async function main() {
     physicalAsset: {
       assetId: "COTTON-2024-001",
       material: "Organic Cotton",
-      composition: "100% Organic Cotton Fibers",
+      composition: "100% Organic Cotton Fibers, Color: Natural",
       weight: "500",
+      color: "#F5F5DC",
       batchNumber: "OC-2024-001",
       productionDate: "2024-01-15",
       expiryDate: "2026-01-15"
@@ -128,8 +129,9 @@ async function main() {
     physicalAsset: {
       assetId: "WOOL-2024-002",
       material: "Merino Wool",
-      composition: "100% Fine Merino Wool",
+      composition: "100% Fine Merino Wool, Color: White",
       weight: "300",
+      color: "#FFFFFF",
       batchNumber: "MW-2024-002",
       productionDate: "2024-02-20",
       expiryDate: "2029-02-20"
@@ -168,6 +170,53 @@ async function main() {
   );
   await tx2.wait();
   console.log("✅ Batch 2 created: Merino Wool (WOOL-2024-002)");
+  
+  // Batch 3: Organic Silk (created by producer1)
+  const batch3 = {
+    physicalAsset: {
+      assetId: "SILK-2024-003",
+      material: "Organic Silk",
+      composition: "100% Organic Silk, Color: Light Blue",
+      weight: "250",
+      color: "#ADD8E6",
+      batchNumber: "OS-2024-003",
+      productionDate: "2024-03-10",
+      expiryDate: "2027-03-10"
+    },
+    tracer: {
+      supplier: "Sustainable Silk Co.",
+      farmLocation: "Suzhou Region",
+      country: "China",
+      gpsCoordinates: "31.2989° N, 120.5853° E",
+      certifications: "GOTS Certified, Organic",
+      harvestDate: "2024-03-05"
+    },
+    validation: {
+      qualityGrade: "Premium Grade A",
+      moistureContent: "11%",
+      contamination: "None",
+      inspectionDate: "2024-03-08",
+      inspector: "Li Wei",
+      labResults: "Excellent quality, no defects"
+    },
+    compliance: {
+      regulatoryStandards: "GOTS, Organic Content Standard",
+      sustainabilityCert: "GOTS Certified",
+      fairTradeCert: "Fair Trade Certified",
+      organicCert: "Organic",
+      carbonFootprint: "3.5 kg CO2e per kg",
+      waterUsage: "2500 liters per kg"
+    }
+  };
+  
+  const tx3 = await supplyChain.connect(accounts[1]).createBatch(
+    batch3.physicalAsset,
+    batch3.tracer,
+    batch3.validation,
+    batch3.compliance
+  );
+  await tx3.wait();
+  console.log("✅ Batch 3 created: Organic Silk (SILK-2024-003)");
   
   console.log("\n✨ Sample batches created on blockchain!");
 }

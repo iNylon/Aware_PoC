@@ -20,12 +20,17 @@
             </div>
             <div class="nav">
                 <a href="index.html">Home</a>
-                <a href="wallet.html">Wallet</a>
                 <a href="create_token.html">Create Token</a>
                 <a href="update_token.html">Update Token</a>
-                <a href="blockchain.html" class="active">Blockchain Dashboard</a>
-                <a href="batches.html">View Batches</a>
-                <a href="batch_approve.html">Approve Batches</a>
+            </div>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
+                    Logged in as: <strong id="username-display">-</strong>
+                </div>
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
+                    Role: <strong id="role-display">-</strong>
+                </div>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
             </div>
         </aside>
 
@@ -109,16 +114,176 @@
                             <button class="btn-primary" onclick="registerUser()">Register on Blockchain</button>
                         </div>
                     </div>
+
+                    <!-- Batches Section -->
+                    <div class="card--page" style="margin-top: 20px;">
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 12px;">📦 All Blockchain Batches</h3>
+                        
+                        <div class="filter-bar">
+                            <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..." oninput="filterBlockchainBatches()">
+                            <select id="statusFilter" onchange="filterBlockchainBatches()">
+                                <option value="">All Statuses</option>
+                                <option value="0">Pending</option>
+                                <option value="1">Approved</option>
+                                <option value="2">Rejected</option>
+                                <option value="3">Certified</option>
+                            </select>
+                            <button class="btn-primary" onclick="loadBlockchainBatches()">🔄 Refresh</button>
+                        </div>
+
+                        <div id="blockchain-loading-message" style="text-align: center; padding: 40px; color: var(--muted);">
+                            Loading batches from blockchain...
+                        </div>
+
+                        <div id="blockchain-batches-container" style="display: none;">
+                            <div style="overflow-x: auto; margin-top: 15px;">
+                                <table class="batch-table" id="blockchainBatchTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Color</th>
+                                            <th>Asset ID</th>
+                                            <th>Weight Kgs</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="blockchainBatchTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="blockchain-no-batches" style="display: none; text-align: center; padding: 40px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                            <h3 style="margin-bottom: 8px;">No batches found</h3>
+                            <p style="color: var(--muted);">No batches available on the blockchain yet.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- Batch Details Modal -->
+    <div id="batchModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeBatchModal(event)">
+        <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: var(--r-lg); padding: 30px; position: relative;" onclick="event.stopPropagation()">
+            <button onclick="closeBatchModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);">&times;</button>
+            <div id="batchModalContent"></div>
+        </div>
+    </div>
+
+    <script src="batches.js"></script>
     <script>
+        let currentUser = null;
         let provider = null;
         let signer = null;
         let userAddress = null;
         let blockchainInfo = null;
+        let allBlockchainBatches = [];
+        let filteredBlockchainBatches = [];
+
+        // Load batches from blockchain
+        async function loadBlockchainBatches() {
+            try {
+                document.getElementById('blockchain-loading-message').style.display = 'block';
+                document.getElementById('blockchain-batches-container').style.display = 'none';
+                document.getElementById('blockchain-no-batches').style.display = 'none';
+
+                allBlockchainBatches = await loadBatchesGlobally();
+                filteredBlockchainBatches = [...allBlockchainBatches];
+
+                document.getElementById('blockchain-loading-message').style.display = 'none';
+
+                if (allBlockchainBatches.length === 0) {
+                    document.getElementById('blockchain-no-batches').style.display = 'block';
+                } else {
+                    document.getElementById('blockchain-batches-container').style.display = 'block';
+                    renderBatchTable(filteredBlockchainBatches, 'blockchainBatchTableBody', 'viewBlockchainBatchDetails');
+                }
+            } catch (error) {
+                console.error('Error loading blockchain batches:', error);
+                document.getElementById('blockchain-loading-message').innerHTML = `
+                    <div style="color: #f44336;">
+                        Error loading batches. Please make sure the blockchain is running.
+                    </div>
+                `;
+            }
+        }
+
+        function filterBlockchainBatches() {
+            const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredBlockchainBatches = allBlockchainBatches.filter(batch => {
+                const matchesSearch = !searchTerm || (
+                    batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.material?.toLowerCase().includes(searchTerm)
+                );
+
+                const matchesStatus = !statusFilter || batch.status === parseInt(statusFilter);
+
+                return matchesSearch && matchesStatus;
+            });
+
+            renderBatchTable(filteredBlockchainBatches, 'blockchainBatchTableBody', 'viewBlockchainBatchDetails');
+        }
+
+        function viewBlockchainBatchDetails(batchId) {
+            const batch = allBlockchainBatches.find(b => b.id === batchId);
+            if (!batch) return;
+
+            const content = `
+                <h2 style="margin-bottom: 24px;">Batch #${batch.id} Details</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📦 Physical Asset</h3>
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 8px;"><strong>Asset ID:</strong> ${batch.physicalAsset.assetId || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Material:</strong> ${batch.physicalAsset.material || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Composition:</strong> ${batch.physicalAsset.composition || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Weight:</strong> ${batch.physicalAsset.weight || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Batch Number:</strong> ${batch.physicalAsset.batchNumber || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
+                        <div style="font-size: 13px;">
+                            <div style="margin-bottom: 8px;"><strong>Supplier:</strong> ${batch.tracer.supplier || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Farm Location:</strong> ${batch.tracer.farmLocation || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Country:</strong> ${batch.tracer.country || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>GPS Coordinates:</strong> ${batch.tracer.gpsCoordinates || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>Certifications:</strong> ${batch.tracer.certifications || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 20px; margin-top: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">ℹ️ Batch Status</h3>
+                    <div style="font-size: 13px;">
+                        <div style="margin-bottom: 8px;"><strong>Status:</strong> ${getStatusBadge(batch.status)}</div>
+                        <div style="margin-bottom: 8px;"><strong>Created By:</strong> ${batch.createdByName || 'Unknown'}</div>
+                        <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateTime(batch.createdAt)}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="closeBatchModal()" class="btn-secondary">Close</button>
+                </div>
+            `;
+
+            document.getElementById('batchModalContent').innerHTML = content;
+            document.getElementById('batchModal').style.display = 'block';
+        }
+
+        function closeBatchModal(event) {
+            if (!event || event.target.id === 'batchModal') {
+                document.getElementById('batchModal').style.display = 'none';
+            }
+        }
 
         async function loadBlockchainInfo() {
             try {
@@ -264,10 +429,46 @@
             }
         }
 
-        // Load blockchain info on page load
-        window.addEventListener('load', () => {
+        // Check authentication on page load
+        window.addEventListener('load', async () => {
+            await checkAuthentication();
             loadBlockchainInfo();
+            loadBlockchainBatches();
         });
+
+        async function checkAuthentication() {
+            try {
+                const response = await fetch('/api/auth/session', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (!data.loggedIn) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                currentUser = data.user;
+                document.getElementById('username-display').textContent = currentUser.username;
+                const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
+                document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
     </script>
 
     <!-- Include ethers.js for blockchain interactions -->

@@ -59,21 +59,28 @@ function loadContract() {
   }
 }
 
-// Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session middleware
+// Session middleware - MUST be before CORS
 app.use(session({
   secret: 'aware-blockchain-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: { 
+    secure: false, 
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
+
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serveer statische bestanden uit de web map
 app.use(express.static(path.join(__dirname, '..', 'web')));
@@ -170,6 +177,13 @@ app.post('/api/auth/login', async (req, res) => {
         value: ethers.parseEther("1.0")
       });
       await fundTx.wait();
+      
+      // Register the new wallet in the blockchain contract
+      console.log(`Registering wallet ${wallet.address} for user ${username} in blockchain...`);
+      const contractWithSigner = contract.connect(wallet);
+      const registerTx = await contractWithSigner.registerUser(username + '_wallet', 'auto', role);
+      await registerTx.wait();
+      console.log(`✅ Wallet registered in blockchain for ${username}`);
       
       // Store wallet in memory
       userWallet = {

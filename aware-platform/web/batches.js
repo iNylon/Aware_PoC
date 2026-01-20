@@ -129,3 +129,69 @@ function sortBatches(batches, sortBy) {
     
     return sorted;
 }
+
+// Global function to load batches from blockchain
+async function loadBatchesGlobally() {
+    try {
+        const batches = await fetchBatches();
+        return batches;
+    } catch (error) {
+        console.error('Error loading batches globally:', error);
+        return [];
+    }
+}
+
+// Render batch table with standardized columns: Date, Type, Color, Asset ID, Weight Kgs, Status, Action
+function renderBatchTable(batches, tableBodyId, onActionClick) {
+    const tbody = document.getElementById(tableBodyId);
+    if (!tbody) {
+        console.error('Table body not found:', tableBodyId);
+        return;
+    }
+
+    tbody.innerHTML = '';
+
+    if (!batches || batches.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+                    No batches found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    batches.forEach((batch) => {
+        const row = document.createElement('tr');
+        
+        // Extract color from composition or material
+        const colorText = batch.physicalAsset.composition?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
+                         batch.physicalAsset.material?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
+                         'N/A';
+        
+        // Get hex color if available
+        const colorHex = batch.physicalAsset.color || '#CCCCCC';
+        
+        // Extract type from material
+        const type = batch.physicalAsset.material || 'N/A';
+        
+        row.innerHTML = `
+            <td>${formatDate(batch.createdAt)}</td>
+            <td>${type}</td>
+            <td>
+                <span class="color-box" style="background-color: ${colorHex};"></span>
+                ${colorText}
+            </td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${batch.physicalAsset.assetId}">
+                ${batch.physicalAsset.assetId || 'N/A'}
+            </td>
+            <td>${batch.physicalAsset.weight || 'N/A'}</td>
+            <td>${getStatusBadge(batch.status)}</td>
+            <td>
+                <button class="select-btn" onclick="${onActionClick}(${batch.id})">Select</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}

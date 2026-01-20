@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<!-- Version: 2026-01-20 -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="aware-style.css">
     <script src="batches.js"></script>
-    <script src="aware-sdk.js"></script>
 </head>
 
 <body>
@@ -22,7 +21,7 @@
             <div class="nav">
                 <a href="index.html">Home</a>
                 <a href="create_token.html" class="active">Create Token</a>
-                <a href="update_token.html">Manage Batches</a>
+                <a href="update_token.html">Update Token</a>
             </div>
             <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
                 <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
@@ -31,9 +30,7 @@
                 <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
                     Role: <strong id="role-display">-</strong>
                 </div>
-                <button onclick="logout()" class="btn" style="width: 100%; background: rgba(255,51,0,.1); color: #FF3300; border: 1px solid #FF3300;">
-                    Logout
-                </button>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px;">Logout</button>
             </div>
         </aside>
 
@@ -87,8 +84,10 @@
                     </select>
                     <select id="statusFilter" onchange="filterBatches()">
                         <option value="">Filter by Status</option>
-                        <option value="CONCEPT">CONCEPT</option>
-                        <option value="SENT">SENT</option>
+                        <option value="0">Pending</option>
+                        <option value="1">Approved</option>
+                        <option value="2">Rejected</option>
+                        <option value="3">Certified</option>
                     </select>
                 </div>
 
@@ -191,16 +190,24 @@
                         <label style="margin-top: 15px;">Production Facility *:</label>
                         <select id="productionFacility">
                             <option value="">--Select from Producer Geo Locations--</option>
+                            <option value="Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China">Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China</option>
+                            <option value="Shanghai Hongda Manufacturing - Shanghai, China">Shanghai Hongda Manufacturing - Shanghai, China</option>
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Main) *:</label>
                         <select id="valueChainMain">
                             <option value="">--Select Value Chain Process (Main)--</option>
+                            <option value="Raw Material Extraction">Raw Material Extraction</option>
+                            <option value="Raw Material Processing">Raw Material Processing</option>
+                            <option value="Material Production">Material Production</option>
+                            <option value="Finished Production Assembly">Finished Production Assembly</option>
                         </select>
 
                         <label style="margin-top: 15px;">Value Chain Process (Sub) *:</label>
                         <select id="valueChainSub">
                             <option value="">--Select Value Chain Process (Sub)--</option>
+                            <option value="Fabric Weaving">Fabric Weaving</option>
+                            <option value="Fabric Knitting">Fabric Knitting</option>
                         </select>
 
                         <label style="margin-top: 15px;">Aware™ Token Type:</label>
@@ -220,7 +227,7 @@
 
                         <label style="margin-top: 15px;">Composition *:</label>
                         <div id="compositionList"></div>
-                        <button class="add-btn" onclick="addComposition()">+ Add Composition</button>
+                        <button class="add-btn" onclick="addComposition()" style="margin-top: 10px;">+ Add Composition</button>
 
                         <label style="margin-top: 15px;">Total Weight of the Products in Kgs(#Tokens) *:</label>
                         <input type="number" id="totalWeight" placeholder="e.g., 8500">
@@ -336,26 +343,83 @@
                 <div class="section" id="section4">
                     <div class="field-label">4. Company Compliances</div>
                     <div class="field-value">
-                        <label><strong>Environmental Scope Certificates</strong></label>
-                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                            <small>Certification Name | Description | Status | Valid Thru Date</small>
-                            <p style="margin-top: 5px; font-size: 13px;">Example: GRS | GRS | VERIFIED | 31/08/2026</p>
+                        <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h3 style="display: flex; align-items: center; font-size: 16px; margin-bottom: 15px;">
+                                <span style="margin-right: 8px;">🌿</span> Environmental Scope Certificates
+                            </h3>
+                            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Certification Name</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;"><a href="#" style="color: #667eea;">GRS</a></td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">GRS</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">VERIFIED</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">31/08/2026</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                                            <input type="checkbox" class="compliance-checkbox" data-cert="GRS" style="width: 18px; height: 18px; cursor: pointer;">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <label style="margin-top: 15px;"><strong>Social Compliance Certificates</strong></label>
-                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                            <small>Certification Name | Description | Status | Valid Thru Date</small>
-                            <p style="margin-top: 5px; font-size: 13px;">Example: FairWear | Social Cer... | VERIFIED |
-                                01/06/2027</p>
+                        <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h3 style="display: flex; align-items: center; font-size: 16px; margin-bottom: 15px;">
+                                <span style="margin-right: 8px;">🤝</span> Social Compliance Certificates
+                            </h3>
+                            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Certification Name</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;"><a href="#" style="color: #667eea;">FairWear</a></td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">Social Cer...</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">VERIFIED</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">01/06/2027</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                                            <input type="checkbox" class="compliance-checkbox" data-cert="FairWear" style="width: 18px; height: 18px; cursor: pointer;">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <label style="margin-top: 15px;"><strong>Chemical Compliance Certificates</strong></label>
-                        <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                            <small>Certification Name | Description | Status | Valid Thru Date</small>
-                            <p style="margin-top: 5px; font-size: 13px;">No Data Available</p>
+                        <div style="background: #fff8f0; padding: 20px; border-radius: 8px;">
+                            <h3 style="display: flex; align-items: center; font-size: 16px; margin-bottom: 15px;">
+                                <span style="margin-right: 8px;">🧪</span> Chemical Compliance Certificates
+                            </h3>
+                            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Certification Name</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e0;">Valid Thru Date</th>
+                                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0; width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" style="padding: 20px; text-align: center; color: #999;">No Data Available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-
-                        <div id="compliancesList" style="margin-top: 15px;"></div>
                     </div>
                     <div class="navigation">
                         <button class="btn btn-secondary" onclick="prevPredictedSection(3)">← Previous</button>
@@ -406,7 +470,6 @@
                 ✅ <strong>Success!</strong> Your tokens have been successfully created. 1 kg material = 1 token.
             </div>
         </div>
-    </div>
                     </div>
                 </div>
             </section>
@@ -414,6 +477,7 @@
     </div>
 
     <script>
+        let currentUser = null;
         let currentData = null;
         let allBatches = [];
         let filteredBatches = [];
@@ -421,77 +485,112 @@
         const batchesPerPage = 8;
 
         // Check authentication on page load
-        window.addEventListener('DOMContentLoaded', async function() {
-            console.log('DOM loaded, checking authentication...');
+        window.addEventListener('load', async () => {
+            await checkAuthentication();
+            await loadCreateBatches();
+            
+            // Allow clicking on progress steps to navigate
+            document.querySelectorAll('#predictedData .progress-bar .step').forEach(step => {
+                step.addEventListener('click', function() {
+                    const sectionNum = this.getAttribute('data-step');
+                    nextPredictedSection(sectionNum);
+                });
+            });
+        });
+
+        async function checkAuthentication() {
             try {
-                const response = await fetch('/api/auth/session');
+                const response = await fetch('/api/auth/session', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 
-                console.log('Session response:', data);
-                
                 if (!data.loggedIn) {
-                    console.log('Not logged in, redirecting...');
                     window.location.href = 'login.html';
                     return;
                 }
-                
-                // Show user info in sidebar
-                const usernameEl = document.getElementById('username-display');
-                const roleEl = document.getElementById('role-display');
-                
-                console.log('Username element:', usernameEl);
-                console.log('Role element:', roleEl);
-                
-                if (usernameEl) {
-                    usernameEl.textContent = data.user.username;
-                    console.log('Set username to:', data.user.username);
-                }
-                
-                if (roleEl) {
-                    const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
-                    roleEl.textContent = roles[data.user.role] || 'Unknown';
-                    console.log('Set role to:', roles[data.user.role]);
-                }
-                
-                console.log('User logged in:', data.user);
+
+                currentUser = data.user;
+                document.getElementById('username-display').textContent = currentUser.username;
+                const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
+                document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
             } catch (error) {
-                console.error('Session check failed:', error);
+                console.error('Auth check error:', error);
                 window.location.href = 'login.html';
             }
-        });
-
-        // Initialize batches array (disabled - using blockchain now)
-        function initBatches() {
-            // No longer needed - batches are on blockchain
-            // allBatches = [];
-            // filteredBatches = [];
         }
 
-        // Display batches in table with pagination (disabled - using blockchain now)
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Load batches from blockchain
+        async function loadCreateBatches() {
+            try {
+                allBatches = await loadBatchesGlobally();
+                filteredBatches = [...allBatches];
+                displayBatches(filteredBatches);
+            } catch (error) {
+                console.error('Error loading batches:', error);
+            }
+        }
+
+        // Display batches in table with pagination
         function displayBatches(batches) {
-            // No longer needed - batches are on blockchain via index.html
-        }
+            filteredBatches = batches;
+            const startIndex = (currentPage - 1) * batchesPerPage;
+            const endIndex = startIndex + batchesPerPage;
+            const batchesToShow = filteredBatches.slice(startIndex, endIndex);
 
-        function updatePagination(totalBatches) {
-            const totalPages = Math.ceil(totalBatches / batchesPerPage);
+            if (batchesToShow.length === 0) {
+                const tbody = document.getElementById('batchTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+                            No batches found
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('batchPagination').innerHTML = '';
+                return;
+            }
+
+            renderBatchTable(batchesToShow, 'batchTableBody', 'selectBatch');
+            updatePagination();
+        }
+        
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
             const paginationDiv = document.getElementById('batchPagination');
             
             if (totalPages <= 1) {
                 paginationDiv.innerHTML = '';
                 return;
             }
-            
+
             let paginationHTML = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">';
             
-            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} style="${currentPage === 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">← Previous</button>`;
+            paginationHTML += '<button class="btn btn-secondary" onclick="changePage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>← Previous</button>';
             
             paginationHTML += '<div style="display: flex; gap: 5px;">';
             for (let i = 1; i <= totalPages; i++) {
-                paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="changePage(${i})" style="min-width: 40px;">${i}</button>`;
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    paginationHTML += '<button class="btn ' + (i === currentPage ? 'btn-primary' : 'btn-secondary') + '" onclick="changePage(' + i + ')">' + i + '</button>';
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    paginationHTML += '<span style="padding: 0 5px;">...</span>';
+                }
             }
             paginationHTML += '</div>';
             
-            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} style="${currentPage === totalPages ? 'opacity: 0.5; cursor: not-allowed;' : ''}">Next →</button>`;
+            paginationHTML += '<button class="btn btn-secondary" onclick="changePage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next →</button>';
             
             paginationHTML += '</div>';
             paginationDiv.innerHTML = paginationHTML;
@@ -555,34 +654,46 @@
             const compositionFilter = document.getElementById('compositionFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
 
-            let filtered = allBatches.filter(batch => {
-                const matchesSearch = batch.assetId.toLowerCase().includes(searchTerm);
-                const matchesComposition = !compositionFilter || batch.assetId.includes(compositionFilter);
-                const matchesStatus = !statusFilter || batch.status === statusFilter;
+            filteredBatches = allBatches.filter(batch => {
+                const matchesSearch = !searchTerm || (
+                    batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.material?.toLowerCase().includes(searchTerm)
+                );
+                const matchesComposition = !compositionFilter || 
+                    batch.physicalAsset.composition?.includes(compositionFilter) ||
+                    batch.physicalAsset.material?.includes(compositionFilter);
+                const matchesStatus = !statusFilter || batch.status === parseInt(statusFilter);
 
                 return matchesSearch && matchesComposition && matchesStatus;
             });
 
             currentPage = 1;
-            displayBatches(filtered);
+            displayBatches(filteredBatches);
         }
 
         // Select a batch
         function selectBatch(batchId) {
-            currentData = JSON.parse(JSON.stringify(batchData[batchId]));
-            const batch = batchData[batchId];
+            const batch = allBatches.find(b => b.id === batchId);
+            if (!batch) return;
+
+            currentData = JSON.parse(JSON.stringify(batch));
+
+            // Extract color from composition or material
+            const color = batch.physicalAsset.composition?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
+                         batch.physicalAsset.material?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
+                         'N/A';
 
             // Display selected batch info
             const display = document.getElementById('selectedBatchDisplay');
             const info = document.getElementById('selectedBatchInfo');
 
             info.innerHTML = `
-                <strong>Date:</strong> ${batch.date}<br>
-                <strong>Type:</strong> ${batch.type}<br>
-                <strong>Color:</strong> <span class="color-box" style="background-color: ${batch.colorHex}; margin-right: 5px;"></span>${batch.color}<br>
-                <strong>Asset ID:</strong> ${batch.assetId}<br>
-                <strong>Weight:</strong> ${batch.weight} kgs<br>
-                <strong>Status:</strong> <span class="status-badge status-${batch.status.toLowerCase()}">${batch.status}</span>
+                <strong>Date:</strong> ${formatDate(batch.createdAt)}<br>
+                <strong>Type:</strong> ${batch.physicalAsset.material || 'N/A'}<br>
+                <strong>Color:</strong> ${color}<br>
+                <strong>Asset ID:</strong> ${batch.physicalAsset.assetId}<br>
+                <strong>Weight:</strong> ${batch.physicalAsset.weight || 'N/A'}<br>
+                <strong>Status:</strong> ${getStatusBadge(batch.status)}
             `;
 
             display.style.display = 'block';
@@ -854,11 +965,6 @@ Now update the fields based on the changes described above.`
                 alert('Error initializing form: ' + error.message);
             }
         }
-
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', function () {
-            initBatches();
-        });
 
         function analyzeChanges(changesText) {
             const text = changesText.toLowerCase();
@@ -1140,7 +1246,7 @@ Now update the fields based on the changes described above.`
             list.innerHTML = '';
             
             if (!currentData.composition || currentData.composition.length === 0) {
-                list.innerHTML = '<p style="color: #999; font-style: italic;">No compositions yet. Click "+ Add Composition Material" to add one.</p>';
+                list.innerHTML = '<p style="color: #999; font-style: italic;">No compositions yet. Click "+ Add Composition" to add one.</p>';
                 return;
             }
             
@@ -1152,7 +1258,13 @@ Now update the fields based on the changes described above.`
                     <div class="input-row">
                         <label>Composition Material *:</label>
                         <select onchange="updateComposition(${index}, 'material', this.value)">
-                            <option value="${comp.material}">${comp.material || '--Select Composition Material--'}</option>
+                            <option value="">-- Select Material --</option>
+                            <option value="Organic Silk" ${comp.material === 'Organic Silk' ? 'selected' : ''}>Organic Silk</option>
+                            <option value="Recycled Cotton" ${comp.material === 'Recycled Cotton' ? 'selected' : ''}>Recycled Cotton</option>
+                            <option value="Conventional Cotton" ${comp.material === 'Conventional Cotton' ? 'selected' : ''}>Conventional Cotton</option>
+                            <option value="Regenerative Cotton" ${comp.material === 'Regenerative Cotton' ? 'selected' : ''}>Regenerative Cotton</option>
+                            <option value="Organic Cotton" ${comp.material === 'Organic Cotton' ? 'selected' : ''}>Organic Cotton</option>
+                            <option value="Recycled Polyester" ${comp.material === 'Recycled Polyester' ? 'selected' : ''}>Recycled Polyester</option>
                         </select>
                     </div>
                     <div class="input-row" style="margin-top: 10px;">
@@ -1171,13 +1283,6 @@ Now update the fields based on the changes described above.`
                 `;
                 list.appendChild(div);
             });
-
-            // Show total composition percentage
-            const totalPercentage = currentData.composition.reduce((sum, comp) => sum + comp.percentage, 0);
-            const totalDiv = document.createElement('div');
-            totalDiv.style.marginTop = '10px';
-            totalDiv.innerHTML = `<strong>Total Composition: ${totalPercentage}% of 100%</strong>`;
-            list.appendChild(totalDiv);
         }
 
         function toggleSustainability(index) {
@@ -1340,17 +1445,31 @@ Now update the fields based on the changes described above.`
                 
                 <label>Feedstock Type *:</label>
                 <select style="margin-bottom: 10px;">
-                    <option value="">--Please select Feedstock Type--</option>
+                    <option value="">-- Select Feedstock Type --</option>
+                    <option value="Organic">Organic</option>
+                    <option value="Recycled">Recycled</option>
+                    <option value="Conventional">Conventional</option>
+                    <option value="Regenerative">Regenerative</option>
                 </select>
                 
                 <label>Feedstock Source Type *:</label>
                 <select style="margin-bottom: 10px;">
-                    <option value="">--Please select Feedstock Source type--</option>
+                    <option value="">-- Select Source Type --</option>
+                    <option value="Farm">Farm</option>
+                    <option value="Recycling Facility">Recycling Facility</option>
+                    <option value="Manufacturing Plant">Manufacturing Plant</option>
+                    <option value="Supplier">Supplier</option>
                 </select>
                 
                 <label>Source Name *:</label>
                 <select style="margin-bottom: 10px;">
-                    <option value="">--Please select Source Name--</option>
+                    <option value="">-- Select Source Name --</option>
+                    <option value="Green Valley Organic Farm">Green Valley Organic Farm</option>
+                    <option value="EcoSource Recycling Center">EcoSource Recycling Center</option>
+                    <option value="Sustainable Fibers Ltd">Sustainable Fibers Ltd</option>
+                    <option value="BioTextile Industries">BioTextile Industries</option>
+                    <option value="Pure Cotton Collective">Pure Cotton Collective</option>
+                    <option value="Regenerative Farming Co-op">Regenerative Farming Co-op</option>
                 </select>
                 
                 <label>Address:</label>
@@ -1358,7 +1477,14 @@ Now update the fields based on the changes described above.`
                 
                 <label>Source Certification:</label>
                 <select style="margin-bottom: 10px;">
-                    <option value="">--Please select Source Certification--</option>
+                    <option value="">-- Select Certification --</option>
+                    <option value="GOTS">GOTS</option>
+                    <option value="GRS">GRS</option>
+                    <option value="OEKO-TEX">OEKO-TEX</option>
+                    <option value="EU Organic">EU Organic</option>
+                    <option value="Fair Trade">Fair Trade</option>
+                    <option value="FSC">FSC</option>
+                    <option value="Bluesign">Bluesign</option>
                 </select>
                 
                 <label>Source Invoice No. *:</label>
@@ -1501,16 +1627,17 @@ Now update the fields based on the changes described above.`
             const dppVCSub = document.getElementById('dppVCSub');
             const dppTracer = document.getElementById('dppTracer');
             const dppCertificates = document.getElementById('dppCertificates');
+            const dppLocation = document.getElementById('dppLocation');
             
             if (dppTokenType) dppTokenType.textContent = document.getElementById('tokenType')?.value || '-';
             if (dppAssetId) dppAssetId.textContent = document.getElementById('assetId')?.value || '-';
 
             // Composition
             let compositionText = '';
-            if (currentData.composition) {
-                currentData.composition.forEach(comp => {
-                    compositionText += comp.material + ' ' + comp.percentage + '%, ';
-                });
+            if (currentData.composition && currentData.composition.length > 0) {
+                compositionText = currentData.composition.map(comp => 
+                    comp.material + ' (' + comp.percentage + '%)'
+                ).join(', ');
             }
             if (dppComposition) dppComposition.textContent = compositionText || '-';
 
@@ -1524,6 +1651,9 @@ Now update the fields based on the changes described above.`
             const vcSub = document.getElementById('valueChainSub')?.value;
             if (dppVCMain) dppVCMain.textContent = vcMain || '-';
             if (dppVCSub) dppVCSub.textContent = vcSub || '-';
+            
+            const productionFacility = document.getElementById('productionFacility')?.value;
+            if (dppLocation) dppLocation.textContent = productionFacility || '-';
 
             const tracerType = document.querySelector('input[name="tracerType"]:checked');
             if (dppTracer) dppTracer.textContent = tracerType ? tracerType.value : '-';
@@ -1532,6 +1662,18 @@ Now update the fields based on the changes described above.`
                 dppCertificates.textContent = currentData.compliances.join(', ') || '-';
             }
         }
+        
+        // Auto-update DPP on input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['tokenType', 'assetId', 'mainColor', 'totalWeight', 'valueChainMain', 'valueChainSub', 'productionFacility'];
+            inputs.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.addEventListener('change', updateDPP);
+                    elem.addEventListener('input', updateDPP);
+                }
+            });
+        });
 
         function toggleSustainableClaims() {
             const toggle = document.getElementById('sustainableClaimsToggle');
@@ -1670,6 +1812,9 @@ Now update the fields based on the changes described above.`
 
                 document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+                // Reload batches from blockchain
+                await loadBatchesGlobally();
+
                 setTimeout(() => {
                     location.reload();
                 }, 5000);
@@ -1691,6 +1836,7 @@ Now update the fields based on the changes described above.`
                 
                 alert(errorMessage);
             }
+        }
 
         // Navigation functions for predicted data sections
         function nextPredictedSection(section) {
@@ -1709,22 +1855,6 @@ Now update the fields based on the changes described above.`
 
         function prevPredictedSection(section) {
             nextPredictedSection(section);
-        }
-
-        // Allow clicking on progress steps to navigate
-        window.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('#predictedData .progress-bar .step').forEach(step => {
-                step.addEventListener('click', function() {
-                    const sectionNum = this.getAttribute('data-step');
-                    nextPredictedSection(sectionNum);
-                });
-            });
-        });
-
-        function logout() {
-            fetch('/api/auth/logout', { method: 'POST' })
-                .then(() => window.location.href = 'login.html')
-                .catch(() => window.location.href = 'login.html');
         }
     </script>
 </body>
