@@ -82,10 +82,19 @@ async function main() {
       material: "Organic Cotton",
       composition: "100% Organic Cotton Fibers, Color: Natural",
       weight: "500",
-      color: "#F5F5DC",
       batchNumber: "OC-2024-001",
       productionDate: "2024-01-15",
-      expiryDate: "2026-01-15"
+      expiryDate: "2026-01-15",
+      color: "Natural",
+      colorHex: "#F5F5DC",
+      productionFacility: "Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China",
+      valueChainMain: "Raw Material Processing",
+      valueChainSub: "Fabric Weaving",
+      tokenType: "Yarn",
+      materialSpec: "20/1s",
+      mainColor: "Natural",
+      sustainableClaims: "GOTS Certified Organic Process",
+      wetProcessing: "dyeing"
     },
     tracer: {
       supplier: "Green Fields Organic Farm",
@@ -93,7 +102,11 @@ async function main() {
       country: "India",
       gpsCoordinates: "30.7333° N, 76.7794° E",
       certifications: "GOTS Certified, Fair Trade",
-      harvestDate: "2024-01-10"
+      harvestDate: "2024-01-10",
+      tracerType: "aware",
+      tracerName: "",
+      tracerDate: "2024-01-12",
+      tracerAdded: "true"
     },
     validation: {
       qualityGrade: "Premium A",
@@ -101,7 +114,8 @@ async function main() {
       contamination: "None Detected",
       inspectionDate: "2024-01-12",
       inspector: "Dr. Priya Sharma",
-      labResults: "Pesticide-free, Heavy metals within limits"
+      labResults: "Pesticide-free, Heavy metals within limits",
+      validationType: "Self-Validation"
     },
     compliance: {
       regulatoryStandards: "EU Organic Regulation 2018/848",
@@ -109,7 +123,8 @@ async function main() {
       fairTradeCert: "Fair Trade USA Certified",
       organicCert: "USDA Organic, EU Organic",
       carbonFootprint: "2.1 kg CO2e per kg",
-      waterUsage: "1800 liters per kg"
+      waterUsage: "1800 liters per kg",
+      selectedCerts: "GOTS, GRS"
     }
   };
   
@@ -129,10 +144,19 @@ async function main() {
       material: "Merino Wool",
       composition: "100% Fine Merino Wool, Color: White",
       weight: "300",
-      color: "#FFFFFF",
       batchNumber: "MW-2024-002",
       productionDate: "2024-02-20",
-      expiryDate: "2029-02-20"
+      expiryDate: "2029-02-20",
+      color: "White",
+      colorHex: "#FFFFFF",
+      productionFacility: "Shanghai Hongda Manufacturing - Shanghai, China",
+      valueChainMain: "Material Production",
+      valueChainSub: "Fabric Knitting",
+      tokenType: "Fabric",
+      materialSpec: "17.5 micron",
+      mainColor: "White",
+      sustainableClaims: "RWS Certified Responsible Wool",
+      wetProcessing: "washing"
     },
     tracer: {
       supplier: "Mountain Meadows Ranch",
@@ -140,7 +164,11 @@ async function main() {
       country: "New Zealand",
       gpsCoordinates: "44.0000° S, 170.0000° E",
       certifications: "ZQ Merino Standard, RWS Certified",
-      harvestDate: "2024-02-15"
+      harvestDate: "2024-02-15",
+      tracerType: "custom",
+      tracerName: "WoolTrace™",
+      tracerDate: "2024-02-18",
+      tracerAdded: "true"
     },
     validation: {
       qualityGrade: "Superfine 17.5 micron",
@@ -148,7 +176,8 @@ async function main() {
       contamination: "Clean, No vegetable matter",
       inspectionDate: "2024-02-18",
       inspector: "John McKenzie",
-      labResults: "Fiber diameter 17.5μm, Strength 35 N/ktex"
+      labResults: "Fiber diameter 17.5μm, Strength 35 N/ktex",
+      validationType: "Lab Testing"
     },
     compliance: {
       regulatoryStandards: "Responsible Wool Standard (RWS)",
@@ -156,7 +185,8 @@ async function main() {
       fairTradeCert: "Not Applicable",
       organicCert: "Not Applicable",
       carbonFootprint: "15.2 kg CO2e per kg",
-      waterUsage: "125 liters per kg"
+      waterUsage: "125 liters per kg",
+      selectedCerts: "OEKO-TEX Standard 100"
     }
   };
   
@@ -176,10 +206,19 @@ async function main() {
       material: "Organic Silk",
       composition: "100% Organic Silk, Color: Light Blue",
       weight: "250",
-      color: "#ADD8E6",
       batchNumber: "OS-2024-003",
       productionDate: "2024-03-10",
-      expiryDate: "2027-03-10"
+      expiryDate: "2027-03-10",
+      color: "Light Blue",
+      colorHex: "#ADD8E6",
+      productionFacility: "Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China",
+      valueChainMain: "Raw Material Processing",
+      valueChainSub: "Fabric Weaving",
+      tokenType: "Yarn",
+      materialSpec: "22 momme",
+      mainColor: "Light Blue",
+      sustainableClaims: "Peace Silk - No harm to silkworms",
+      wetProcessing: "dyeing"
     },
     tracer: {
       supplier: "Sustainable Silk Co.",
@@ -187,7 +226,11 @@ async function main() {
       country: "China",
       gpsCoordinates: "31.2989° N, 120.5853° E",
       certifications: "GOTS Certified, Organic",
-      harvestDate: "2024-03-05"
+      harvestDate: "2024-03-05",
+      tracerType: "aware",
+      tracerName: "",
+      tracerDate: "2024-03-08",
+      tracerAdded: "true"
     },
     validation: {
       qualityGrade: "Premium Grade A",
@@ -195,7 +238,8 @@ async function main() {
       contamination: "None",
       inspectionDate: "2024-03-08",
       inspector: "Li Wei",
-      labResults: "Excellent quality, no defects"
+      labResults: "Excellent quality, no defects",
+      validationType: "Self-Validation"
     },
     compliance: {
       regulatoryStandards: "GOTS, Organic Content Standard",
@@ -203,7 +247,8 @@ async function main() {
       fairTradeCert: "Fair Trade Certified",
       organicCert: "Organic",
       carbonFootprint: "3.5 kg CO2e per kg",
-      waterUsage: "2500 liters per kg"
+      waterUsage: "2500 liters per kg",
+      selectedCerts: "GOTS"
     }
   };
   

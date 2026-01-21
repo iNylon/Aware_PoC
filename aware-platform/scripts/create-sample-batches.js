@@ -59,7 +59,16 @@ const batch1 = {
         color: "#F5F5DC",
         batchNumber: "OC-2024-001",
         productionDate: "2024-01-15",
-        expiryDate: "2026-01-15"
+        expiryDate: "2026-01-15",
+        productionFacility: "Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China",
+        valueChainMain: "Raw Material Processing",
+        valueChainSub: "Fabric Weaving",
+        tokenType: "Yarn",
+        materialSpec: "20/1s",
+        mainColor: "Natural",
+        colorHex: "#F5F5DC",
+        sustainableClaims: "GOTS Certified Organic Process",
+        wetProcessing: "dyeing"
     },
     tracer: {
         supplier: "Green Fields Organic Farm",
@@ -67,7 +76,10 @@ const batch1 = {
         country: "India",
         gpsCoordinates: "30.7333° N, 76.7794° E",
         certifications: "GOTS Certified, Fair Trade",
-        harvestDate: "2024-01-10"
+        harvestDate: "2024-01-10",
+        tracerType: "aware",
+        tracerDate: "2024-01-12",
+        tracerAdded: true
     },
     validation: {
         qualityGrade: "Premium A",
@@ -75,7 +87,8 @@ const batch1 = {
         contamination: "None Detected",
         inspectionDate: "2024-01-12",
         inspector: "Dr. Priya Sharma",
-        labResults: "Pesticide-free, Heavy metals within limits"
+        labResults: "Pesticide-free, Heavy metals within limits",
+        validationType: "Self-Validation"
     },
     compliance: {
         regulatoryStandards: "EU Organic Regulation 2018/848",
@@ -83,8 +96,25 @@ const batch1 = {
         fairTradeCert: "Fair Trade USA Certified",
         organicCert: "USDA Organic, EU Organic",
         carbonFootprint: "2.1 kg CO2e per kg",
-        waterUsage: "1800 liters per kg"
-    }
+        waterUsage: "1800 liters per kg",
+        selectedCerts: ["GOTS", "GRS"]
+    },
+    suppliers: [
+        {
+            name: "Green Fields Organic Farm",
+            type: "Cotton Supplier",
+            location: "India",
+            weight: 500
+        }
+    ],
+    compositionDetails: [
+        {
+            material: "Organic Cotton",
+            percentage: 100,
+            sustainable: true,
+            claim: "GOTS Certified"
+        }
+    ]
 };
 
 const batch2 = {
@@ -96,7 +126,16 @@ const batch2 = {
         color: "#FFFFFF",
         batchNumber: "MW-2024-002",
         productionDate: "2024-02-20",
-        expiryDate: "2029-02-20"
+        expiryDate: "2029-02-20",
+        productionFacility: "Shanghai Hongda Manufacturing - Shanghai, China",
+        valueChainMain: "Material Production",
+        valueChainSub: "Fabric Knitting",
+        tokenType: "Fabric",
+        materialSpec: "17.5 micron",
+        mainColor: "White",
+        colorHex: "#FFFFFF",
+        sustainableClaims: "RWS Certified Responsible Wool",
+        wetProcessing: "washing"
     },
     tracer: {
         supplier: "Mountain Meadows Ranch",
@@ -104,7 +143,11 @@ const batch2 = {
         country: "New Zealand",
         gpsCoordinates: "44.0000° S, 170.0000° E",
         certifications: "ZQ Merino Standard, RWS Certified",
-        harvestDate: "2024-02-15"
+        harvestDate: "2024-02-15",
+        tracerType: "custom",
+        tracerName: "WoolTrace™",
+        tracerDate: "2024-02-18",
+        tracerAdded: true
     },
     validation: {
         qualityGrade: "Superfine 17.5 micron",
@@ -112,7 +155,8 @@ const batch2 = {
         contamination: "Clean, No vegetable matter",
         inspectionDate: "2024-02-18",
         inspector: "John McKenzie",
-        labResults: "Fiber diameter 17.5μm, Strength 35 N/ktex"
+        labResults: "Fiber diameter 17.5μm, Strength 35 N/ktex",
+        validationType: "Lab Testing"
     },
     compliance: {
         regulatoryStandards: "Responsible Wool Standard (RWS)",
@@ -120,8 +164,25 @@ const batch2 = {
         fairTradeCert: "Not Applicable",
         organicCert: "Not Applicable",
         carbonFootprint: "15.2 kg CO2e per kg",
-        waterUsage: "125 liters per kg"
-    }
+        waterUsage: "125 liters per kg",
+        selectedCerts: ["OEKO-TEX Standard 100"]
+    },
+    suppliers: [
+        {
+            name: "Mountain Meadows Ranch",
+            type: "Wool Supplier",
+            location: "New Zealand",
+            weight: 300
+        }
+    ],
+    compositionDetails: [
+        {
+            material: "Merino Wool",
+            percentage: 100,
+            sustainable: true,
+            claim: "RWS Certified"
+        }
+    ]
 };
 
 const batch3 = {
@@ -133,7 +194,16 @@ const batch3 = {
         color: "#ADD8E6",
         batchNumber: "OS-2024-003",
         productionDate: "2024-03-10",
-        expiryDate: "2027-03-10"
+        expiryDate: "2027-03-10",
+        productionFacility: "Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China",
+        valueChainMain: "Raw Material Processing",
+        valueChainSub: "Fabric Weaving",
+        tokenType: "Yarn",
+        materialSpec: "16/1s",
+        mainColor: "Light Blue",
+        colorHex: "#ADD8E6",
+        sustainableClaims: "GOTS Organic Certified Silk Production",
+        wetProcessing: "dyeing"
     },
     tracer: {
         supplier: "Sustainable Silk Co.",
@@ -141,7 +211,10 @@ const batch3 = {
         country: "China",
         gpsCoordinates: "31.2989° N, 120.5853° E",
         certifications: "GOTS Certified, Organic",
-        harvestDate: "2024-03-05"
+        harvestDate: "2024-03-05",
+        tracerType: "aware",
+        tracerDate: "2024-03-08",
+        tracerAdded: true
     },
     validation: {
         qualityGrade: "Premium Grade A",
@@ -149,7 +222,8 @@ const batch3 = {
         contamination: "None",
         inspectionDate: "2024-03-08",
         inspector: "Li Wei",
-        labResults: "Excellent quality, no defects"
+        labResults: "Excellent quality, no defects",
+        validationType: "Self-Validation"
     },
     compliance: {
         regulatoryStandards: "GOTS, Organic Content Standard",
@@ -157,8 +231,25 @@ const batch3 = {
         fairTradeCert: "Fair Trade Certified",
         organicCert: "Organic",
         carbonFootprint: "3.5 kg CO2e per kg",
-        waterUsage: "2500 liters per kg"
-    }
+        waterUsage: "2500 liters per kg",
+        selectedCerts: ["GOTS", "Fair Trade"]
+    },
+    suppliers: [
+        {
+            name: "Sustainable Silk Co.",
+            type: "Silk Supplier",
+            location: "China",
+            weight: 250
+        }
+    ],
+    compositionDetails: [
+        {
+            material: "Organic Silk",
+            percentage: 100,
+            sustainable: true,
+            claim: "GOTS Certified"
+        }
+    ]
 };
 
 async function main() {

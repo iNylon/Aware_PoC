@@ -942,17 +942,48 @@
                                 content: `You are an assistant for updating Aware™ Token data for textile manufacturers.
 
 Current batch data to update:
-Batch Number: ${selectedUpdateBatch?.batchNumber || 'N/A'}
-Material Type: ${selectedUpdateBatch?.type || selectedUpdateBatch?.materialType || 'N/A'}
-Weight: ${selectedUpdateBatch?.weight || 0} kg
-Description: ${selectedUpdateBatch?.description || 'N/A'}
-Location: ${selectedUpdateBatch?.location || 'N/A'}
-Certifications: ${selectedUpdateBatch?.certifications || 'N/A'}
+Asset ID: ${selectedUpdateBatch?.physicalAsset?.assetId || 'N/A'}
+Material Type: ${selectedUpdateBatch?.physicalAsset?.material || 'N/A'}
+Token Type: ${selectedUpdateBatch?.physicalAsset?.tokenType || 'N/A'}
+Material Spec: ${selectedUpdateBatch?.physicalAsset?.materialSpec || 'N/A'}
+Weight: ${selectedUpdateBatch?.physicalAsset?.weight || 'N/A'} kg
+Color: ${selectedUpdateBatch?.physicalAsset?.mainColor || 'N/A'}
+Color Hex: ${selectedUpdateBatch?.physicalAsset?.colorHex || 'N/A'}
+Batch Number: ${selectedUpdateBatch?.physicalAsset?.batchNumber || 'N/A'}
+Production Date: ${selectedUpdateBatch?.physicalAsset?.productionDate || 'N/A'}
+Production Facility: ${selectedUpdateBatch?.physicalAsset?.productionFacility || 'N/A'}
+Value Chain Main: ${selectedUpdateBatch?.physicalAsset?.valueChainMain || 'N/A'}
+Value Chain Sub: ${selectedUpdateBatch?.physicalAsset?.valueChainSub || 'N/A'}
+Composition: ${selectedUpdateBatch?.physicalAsset?.composition || 'N/A'}
+Sustainable Claims: ${selectedUpdateBatch?.physicalAsset?.sustainableClaims || 'N/A'}
+Wet Processing: ${selectedUpdateBatch?.physicalAsset?.wetProcessing || 'N/A'}
+
+Tracer Info:
+Tracer Type: ${selectedUpdateBatch?.tracer?.tracerType || 'N/A'}
+Tracer Name: ${selectedUpdateBatch?.tracer?.tracerName || 'N/A'}
+Tracer Added: ${selectedUpdateBatch?.tracer?.tracerAdded || 'N/A'}
+Tracer Date: ${selectedUpdateBatch?.tracer?.tracerDate || 'N/A'}
+Supplier: ${selectedUpdateBatch?.tracer?.supplier || 'N/A'}
+Country: ${selectedUpdateBatch?.tracer?.country || 'N/A'}
+Location: ${selectedUpdateBatch?.tracer?.farmLocation || 'N/A'}
+Certifications: ${selectedUpdateBatch?.tracer?.certifications || 'N/A'}
+
+Validation:
+Type: ${selectedUpdateBatch?.validation?.validationType || 'N/A'}
+Quality Grade: ${selectedUpdateBatch?.validation?.qualityGrade || 'N/A'}
+Inspector: ${selectedUpdateBatch?.validation?.inspector || 'N/A'}
+
+Compliance:
+Selected Certs: ${selectedUpdateBatch?.compliance?.selectedCerts?.join(', ') || 'N/A'}
+Sustainability Cert: ${selectedUpdateBatch?.compliance?.sustainabilityCert || 'N/A'}
+
+Suppliers: ${selectedUpdateBatch?.suppliers?.map(s => `${s.name} (${s.location}) - ${s.weight}kg`).join('; ') || 'N/A'}
+Composition Details: ${selectedUpdateBatch?.compositionDetails?.map(c => `${c.material} ${c.percentage}% - ${c.claim}`).join('; ') || 'N/A'}
 
 Reference batch data (for comparison):
-Batch Number: ${currentData?.batchNumber || 'N/A'}
-Material Type: ${currentData?.type || currentData?.materialType || 'N/A'}
-Weight: ${currentData?.weight || 0} kg
+Asset ID: ${currentData?.physicalAsset?.assetId || 'N/A'}
+Material Type: ${currentData?.physicalAsset?.material || 'N/A'}
+Weight: ${currentData?.physicalAsset?.weight || 0} kg
 
 The producer indicates these changes (may be in Dutch or English):
 "${changes}"
@@ -960,27 +991,40 @@ The producer indicates these changes (may be in Dutch or English):
 TRANSLATION GUIDE:
 - "afgenomen" = "decreased by" or "reduced by"
 - "toegenomen" = "increased by"
-- Example: "de batch met 50kg is afgenomen" means weight decreased by 50kg, so new weight = ${selectedUpdateBatch?.weight || 0} - 50 = ${(selectedUpdateBatch?.weight || 0) - 50}
+- Example: "de batch met 50kg is afgenomen" means weight decreased by 50kg, so new weight = ${selectedUpdateBatch?.physicalAsset?.weight || 0} - 50 = ${(parseInt(selectedUpdateBatch?.physicalAsset?.weight) || 0) - 50}
 
 CRITICAL INSTRUCTIONS:
 1. If user says "afgenomen" (decreased), SUBTRACT that amount from original weight
 2. If user says weight changed to a specific number, use that exact number
 3. Return ONLY valid JSON matching the structure below
-4. Fill ALL required fields
+4. Fill ALL fields based on the changes described
 5. NO markdown code blocks, NO explanations, ONLY the JSON
+6. For fields not mentioned in changes, keep the original values from selectedUpdateBatch
 
 Respond with valid JSON in this EXACT format:
 {
-  "name": "${selectedUpdateBatch?.type || selectedUpdateBatch?.materialType || 'Yarn'}",
-  "weight": ${selectedUpdateBatch?.weight || 0},
-  "composition": [{"material": "${selectedUpdateBatch?.type || selectedUpdateBatch?.materialType || 'Cotton'}", "percentage": 100, "sustainable": true, "claim": "Verified"}],
-  "tracer": "aware",
-  "tracerDate": "2026-01-15",
-  "suppliers": [{"name": "${selectedUpdateBatch?.createdBy || 'Supplier'}", "type": "Material Supplier", "location": "${selectedUpdateBatch?.location || 'Netherlands'}", "weight": ${selectedUpdateBatch?.weight || 0}}],
-  "compliances": ["${selectedUpdateBatch?.certifications || 'Blockchain Verified'}"]
+  "tokenType": "${selectedUpdateBatch?.physicalAsset?.tokenType || 'Yarn'}",
+  "materialSpec": "${selectedUpdateBatch?.physicalAsset?.materialSpec || ''}",
+  "weight": ${parseInt(selectedUpdateBatch?.physicalAsset?.weight) || 0},
+  "mainColor": "${selectedUpdateBatch?.physicalAsset?.mainColor || ''}",
+  "colorHex": "${selectedUpdateBatch?.physicalAsset?.colorHex || '#FFFFFF'}",
+  "batchNumber": "${selectedUpdateBatch?.physicalAsset?.batchNumber || 'BATCH-' + Date.now()}",
+  "productionFacility": "${selectedUpdateBatch?.physicalAsset?.productionFacility || ''}",
+  "valueChainMain": "${selectedUpdateBatch?.physicalAsset?.valueChainMain || ''}",
+  "valueChainSub": "${selectedUpdateBatch?.physicalAsset?.valueChainSub || ''}",
+  "sustainableClaims": "${selectedUpdateBatch?.physicalAsset?.sustainableClaims || ''}",
+  "wetProcessing": "${selectedUpdateBatch?.physicalAsset?.wetProcessing || ''}",
+  "composition": [{"material": "${selectedUpdateBatch?.physicalAsset?.material || 'Cotton'}", "percentage": 100, "sustainable": true, "claim": "Verified"}],
+  "tracerType": "${selectedUpdateBatch?.tracer?.tracerType || 'aware'}",
+  "tracerAdded": ${selectedUpdateBatch?.tracer?.tracerAdded || true},
+  "tracerDate": "${selectedUpdateBatch?.tracer?.tracerDate || '2026-01-15'}",
+  "tracerName": "${selectedUpdateBatch?.tracer?.tracerName || ''}",
+  "suppliers": [{"name": "${selectedUpdateBatch?.tracer?.supplier || 'Supplier'}", "type": "Material Supplier", "location": "${selectedUpdateBatch?.tracer?.country || 'Netherlands'}", "weight": ${parseInt(selectedUpdateBatch?.physicalAsset?.weight) || 0}}],
+  "compliances": ["${selectedUpdateBatch?.compliance?.selectedCerts?.join('","') || 'Blockchain Verified'}"],
+  "validationType": "${selectedUpdateBatch?.validation?.validationType || 'Self-Validation'}"
 }
 
-Now update the fields based on the changes described above.`
+Now update ALL fields based on the changes described above.`
                             }
                         ]
                     })
@@ -1040,14 +1084,27 @@ Now update the fields based on the changes described above.`
                 let predictedData;
                 try {
                     predictedData = JSON.parse(cleanJson);
-                    // Update currentData with AI predictions
+                    // Update currentData with AI predictions - ALL fields
                     if (predictedData.weight) currentData.weight = predictedData.weight;
                     if (predictedData.name) currentData.name = predictedData.name;
+                    if (predictedData.tokenType) currentData.tokenType = predictedData.tokenType;
+                    if (predictedData.materialSpec) currentData.materialSpec = predictedData.materialSpec;
+                    if (predictedData.mainColor) currentData.mainColor = predictedData.mainColor;
+                    if (predictedData.colorHex) currentData.colorHex = predictedData.colorHex;
+                    if (predictedData.batchNumber) currentData.batchNumber = predictedData.batchNumber;
+                    if (predictedData.productionFacility) currentData.productionFacility = predictedData.productionFacility;
+                    if (predictedData.valueChainMain) currentData.valueChainMain = predictedData.valueChainMain;
+                    if (predictedData.valueChainSub) currentData.valueChainSub = predictedData.valueChainSub;
+                    if (predictedData.sustainableClaims) currentData.sustainableClaims = predictedData.sustainableClaims;
+                    if (predictedData.wetProcessing) currentData.wetProcessing = predictedData.wetProcessing;
                     if (predictedData.composition) currentData.composition = predictedData.composition;
                     if (predictedData.suppliers) currentData.suppliers = predictedData.suppliers;
                     if (predictedData.compliances) currentData.compliances = predictedData.compliances;
-                    if (predictedData.tracer) currentData.tracer = predictedData.tracer;
+                    if (predictedData.tracerType) currentData.tracer = predictedData.tracerType;
+                    if (predictedData.tracerAdded !== undefined) currentData.tracerAdded = predictedData.tracerAdded;
                     if (predictedData.tracerDate) currentData.tracerDate = predictedData.tracerDate;
+                    if (predictedData.tracerName) currentData.tracerName = predictedData.tracerName;
+                    if (predictedData.validationType) currentData.validationType = predictedData.validationType;
                     
                     displayPredictedData();
                 } catch (e) {
@@ -1150,8 +1207,108 @@ Now update the fields based on the changes described above.`
                 const match = changesText.match(pattern);
                 if (match && match[1]) {
                     currentData.name = match[1].trim();
+                    currentData.tokenType = match[1].trim();
                     break;
                 }
+            }
+
+            // Parse material spec
+            const specPatterns = [
+                /(?:material\s+)?spec(?:ification)?[:\s]+([0-9\/]+s?)/i,
+                /([0-9]+\/[0-9]+s)/i
+            ];
+            for (const pattern of specPatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    currentData.materialSpec = match[1].trim();
+                    break;
+                }
+            }
+
+            // Parse batch number
+            const batchPatterns = [
+                /batch\s+(?:number|no\.?|nr\.?)[:\s]+([A-Z0-9\-]+)/i,
+                /lot\s+(?:number|no\.?|nr\.?)[:\s]+([A-Z0-9\-]+)/i
+            ];
+            for (const pattern of batchPatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    currentData.batchNumber = match[1].trim();
+                    break;
+                }
+            }
+
+            // Parse production facility
+            const facilityPatterns = [
+                /(?:production\s+)?facility[:\s]+([^,\.]+?)(?:,|\.|$)/i,
+                /(?:produced\s+(?:at|in)|manufacturing)[:\s]+([^,\.]+?)(?:,|\.|$)/i
+            ];
+            for (const pattern of facilityPatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    const facility = match[1].trim();
+                    // Match against available facilities
+                    if (facility.toLowerCase().includes('wenzhou') || facility.toLowerCase().includes('tiancheng')) {
+                        currentData.productionFacility = "Wenzhou TIANCHENG Textile Co., Ltd - Zhejiang, China";
+                    } else if (facility.toLowerCase().includes('shanghai') || facility.toLowerCase().includes('hongda')) {
+                        currentData.productionFacility = "Shanghai Hongda Manufacturing - Shanghai, China";
+                    } else {
+                        currentData.productionFacility = facility;
+                    }
+                    break;
+                }
+            }
+
+            // Parse value chain process
+            const vcMainPatterns = [
+                /(?:value\s+chain|process)[:\s]+([^,\.]+?)(?:,|\.|$)/i
+            ];
+            for (const pattern of vcMainPatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    const process = match[1].trim().toLowerCase();
+                    if (process.includes('extraction')) {
+                        currentData.valueChainMain = "Raw Material Extraction";
+                    } else if (process.includes('processing')) {
+                        currentData.valueChainMain = "Raw Material Processing";
+                    } else if (process.includes('production')) {
+                        currentData.valueChainMain = "Material Production";
+                    } else if (process.includes('assembly')) {
+                        currentData.valueChainMain = "Finished Production Assembly";
+                    }
+                    break;
+                }
+            }
+
+            // Parse value chain sub-process
+            if (text.includes('weaving')) {
+                currentData.valueChainSub = "Fabric Weaving";
+            } else if (text.includes('knitting')) {
+                currentData.valueChainSub = "Fabric Knitting";
+            }
+
+            // Parse sustainable claims
+            const sustainablePatterns = [
+                /sustainable\s+claim[:\s]+([^,\.]+?)(?:,|\.|$)/i,
+                /sustainability[:\s]+([^,\.]+?)(?:,|\.|$)/i
+            ];
+            for (const pattern of sustainablePatterns) {
+                const match = changesText.match(pattern);
+                if (match && match[1]) {
+                    currentData.sustainableClaims = match[1].trim();
+                    break;
+                }
+            }
+
+            // Parse wet processing
+            if (text.includes('dyeing') || text.includes('dyed')) {
+                currentData.wetProcessing = "dyeing";
+            } else if (text.includes('washing') || text.includes('washed')) {
+                currentData.wetProcessing = "washing";
+            } else if (text.includes('printing') || text.includes('printed')) {
+                currentData.wetProcessing = "printing";
+            } else if (text.includes('finishing')) {
+                currentData.wetProcessing = "finishing";
             }
 
             // Parse color - improved pattern to catch multiple formats
@@ -1384,16 +1541,95 @@ Now update the fields based on the changes described above.`
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('assetDate').value = today;
 
-            // Set basic fields - use currentData values instead of hardcoded 'Yarn'
-            document.getElementById('tokenType').value = currentData.name || currentData.type || 'Yarn';
-            document.getElementById('materialSpec').value = currentData.name || '';
-            document.getElementById('mainColor').value = currentData.color || '';
+            // Set ALL basic fields from currentData
+            document.getElementById('tokenType').value = currentData.tokenType || currentData.name || currentData.type || 'Yarn';
+            document.getElementById('materialSpec').value = currentData.materialSpec || currentData.name || '';
+            document.getElementById('mainColor').value = currentData.mainColor || currentData.color || '';
+            if (currentData.colorHex) {
+                document.getElementById('selectMainColor').value = currentData.colorHex;
+            }
             document.getElementById('totalWeight').value = currentData.weight || '';
-            document.getElementById('assetId').value = 'tiancheng - ' + (currentData.name || 'Yarn') + ' - ' + (currentData.color || '') + ' - ' + Date.now();
+            document.getElementById('batchNo').value = currentData.batchNumber || 'BATCH-' + Date.now();
+            
+            // Set production facility if available
+            if (currentData.productionFacility) {
+                const facilitySelect = document.getElementById('productionFacility');
+                if (facilitySelect) facilitySelect.value = currentData.productionFacility;
+            }
+            
+            // Set value chain fields
+            if (currentData.valueChainMain) {
+                const vcMainSelect = document.getElementById('valueChainMain');
+                if (vcMainSelect) vcMainSelect.value = currentData.valueChainMain;
+            }
+            if (currentData.valueChainSub) {
+                const vcSubSelect = document.getElementById('valueChainSub');
+                if (vcSubSelect) vcSubSelect.value = currentData.valueChainSub;
+            }
+            
+            // Set sustainable claims
+            if (currentData.sustainableClaims) {
+                const claimsToggle = document.getElementById('sustainableClaimsToggle');
+                const claimsContent = document.getElementById('sustainableClaimsContent');
+                const claimsInput = document.getElementById('sustainableClaims');
+                if (claimsToggle && claimsContent && claimsInput) {
+                    claimsToggle.classList.add('active');
+                    claimsContent.style.display = 'block';
+                    claimsInput.value = currentData.sustainableClaims;
+                }
+            }
+            
+            // Set wet processing
+            if (currentData.wetProcessing) {
+                const wetToggle = document.getElementById('wetProcessingToggle');
+                const wetContent = document.getElementById('wetProcessingContent');
+                const wetSelect = document.getElementById('wetProcessingSelect');
+                if (wetToggle && wetContent && wetSelect) {
+                    wetToggle.classList.add('active');
+                    wetContent.style.display = 'block';
+                    wetSelect.value = currentData.wetProcessing;
+                }
+            }
+            
+            // Set tracer fields
+            if (currentData.tracerAdded || currentData.tracer) {
+                const tracerToggle = document.getElementById('tracerAddedToggle');
+                const tracerSection = document.getElementById('tracerTypeSection');
+                if (tracerToggle && tracerSection) {
+                    tracerToggle.classList.add('active');
+                    tracerSection.style.display = 'block';
+                    
+                    // Set tracer type radio button
+                    const tracerType = currentData.tracer || 'aware';
+                    const tracerRadio = document.querySelector(`input[name="tracerType"][value="${tracerType}"]`);
+                    if (tracerRadio) {
+                        tracerRadio.checked = true;
+                        updateTracerFields();
+                        
+                        // Set tracer date if available
+                        if (currentData.tracerDate) {
+                            setTimeout(() => {
+                                const tracerDateInput = document.getElementById('tracerDate');
+                                if (tracerDateInput) tracerDateInput.value = currentData.tracerDate;
+                            }, 100);
+                        }
+                        
+                        // Set custom tracer name if available
+                        if (currentData.tracerName && tracerType === 'custom') {
+                            setTimeout(() => {
+                                const tracerNameInput = document.getElementById('tracerName');
+                                if (tracerNameInput) tracerNameInput.value = currentData.tracerName;
+                            }, 100);
+                        }
+                    }
+                }
+            }
+            
+            // Generate asset ID
+            document.getElementById('assetId').value = 'tiancheng - ' + (currentData.tokenType || currentData.name || 'Yarn') + ' - ' + (currentData.materialSpec || '') + ' - ' + (currentData.mainColor || currentData.color || '') + ' - ' + Date.now();
 
             displayCompositions();
             displaySuppliers();
-            updateTracerFields();
             displayCompliances();
             updateDPP();
         }

@@ -22,6 +22,16 @@ contract SupplyChain {
         string batchNumber;
         string productionDate;
         string expiryDate;
+        string color;
+        string colorHex;
+        string productionFacility;
+        string valueChainMain;
+        string valueChainSub;
+        string tokenType;
+        string materialSpec;
+        string mainColor;
+        string sustainableClaims;
+        string wetProcessing;
     }
     
     // Tracer data
@@ -32,6 +42,10 @@ contract SupplyChain {
         string gpsCoordinates;
         string certifications;
         string harvestDate;
+        string tracerType;
+        string tracerName;
+        string tracerDate;
+        string tracerAdded;
     }
     
     // Validation data
@@ -42,6 +56,7 @@ contract SupplyChain {
         string inspectionDate;
         string inspector;
         string labResults;
+        string validationType;
     }
     
     // Compliance data
@@ -52,6 +67,7 @@ contract SupplyChain {
         string organicCert;
         string carbonFootprint;
         string waterUsage;
+        string selectedCerts;
     }
     
     // Complete Batch structure

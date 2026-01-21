@@ -324,7 +324,17 @@ app.get('/api/batches', async (req, res) => {
           weight: physicalAsset.weight,
           batchNumber: physicalAsset.batchNumber,
           productionDate: physicalAsset.productionDate,
-          expiryDate: physicalAsset.expiryDate
+          expiryDate: physicalAsset.expiryDate,
+          color: physicalAsset.color || '',
+          colorHex: physicalAsset.colorHex || '',
+          productionFacility: physicalAsset.productionFacility || '',
+          valueChainMain: physicalAsset.valueChainMain || '',
+          valueChainSub: physicalAsset.valueChainSub || '',
+          tokenType: physicalAsset.tokenType || '',
+          materialSpec: physicalAsset.materialSpec || '',
+          mainColor: physicalAsset.mainColor || '',
+          sustainableClaims: physicalAsset.sustainableClaims || '',
+          wetProcessing: physicalAsset.wetProcessing || ''
         },
         tracer: {
           supplier: tracer.supplier,
@@ -332,7 +342,11 @@ app.get('/api/batches', async (req, res) => {
           country: tracer.country,
           gpsCoordinates: tracer.gpsCoordinates,
           certifications: tracer.certifications,
-          harvestDate: tracer.harvestDate
+          harvestDate: tracer.harvestDate,
+          tracerType: tracer.tracerType || '',
+          tracerName: tracer.tracerName || '',
+          tracerDate: tracer.tracerDate || '',
+          tracerAdded: tracer.tracerAdded === 'true' || tracer.tracerAdded === true
         },
         validation: {
           qualityGrade: validation.qualityGrade,
@@ -340,7 +354,8 @@ app.get('/api/batches', async (req, res) => {
           contamination: validation.contamination,
           inspectionDate: validation.inspectionDate,
           inspector: validation.inspector,
-          labResults: validation.labResults
+          labResults: validation.labResults,
+          validationType: validation.validationType || 'Self-Validation'
         },
         compliance: {
           regulatoryStandards: compliance.regulatoryStandards,
@@ -348,8 +363,31 @@ app.get('/api/batches', async (req, res) => {
           fairTradeCert: compliance.fairTradeCert,
           organicCert: compliance.organicCert,
           carbonFootprint: compliance.carbonFootprint,
-          waterUsage: compliance.waterUsage
+          waterUsage: compliance.waterUsage,
+          selectedCerts: compliance.selectedCerts ? compliance.selectedCerts.split(',').map(s => s.trim()).filter(s => s) : []
         },
+        // Parse JSON from blockchain storage
+        suppliers: (() => {
+          try {
+            return tracer.gpsCoordinates && tracer.gpsCoordinates.startsWith('[') ? JSON.parse(tracer.gpsCoordinates) : [];
+          } catch {
+            return [];
+          }
+        })(),
+        compositionDetails: (() => {
+          try {
+            return validation.labResults && validation.labResults.startsWith('[') ? JSON.parse(validation.labResults) : [];
+          } catch {
+            return [];
+          }
+        })(),
+        validationDetails: (() => {
+          try {
+            return validation.moistureContent && validation.moistureContent.startsWith('[') ? JSON.parse(validation.moistureContent) : [];
+          } catch {
+            return [];
+          }
+        })(),
         createdBy: basicInfo[1],
         createdByName: basicInfo[2],
         createdByRole: Number(basicInfo[3]),
