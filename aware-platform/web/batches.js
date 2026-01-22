@@ -77,7 +77,7 @@ function getStatusBadge(status) {
     const label = STATUS_LABELS[status] || 'Unknown';
     const color = STATUS_COLORS[status] || '#999';
     
-    return `<span class="badge" style="background: ${color}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+    return `<span class="badge" style="background: white; color: ${color}; border: 2px solid ${color}; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-block;">
         ${label}
     </span>`;
 }
@@ -165,13 +165,9 @@ function renderBatchTable(batches, tableBodyId, onActionClick) {
     batches.forEach((batch) => {
         const row = document.createElement('tr');
         
-        // Extract color from composition or material
-        const colorText = batch.physicalAsset.composition?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
-                         batch.physicalAsset.material?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 
-                         'N/A';
-        
-        // Get hex color if available
-        const colorHex = batch.physicalAsset.color || '#CCCCCC';
+        // Get color name and hex
+        const colorName = batch.physicalAsset.mainColor || batch.physicalAsset.colorName || batch.physicalAsset.composition?.match(/color[:\s]+([^,\n]+)/i)?.[1] || 'N/A';
+        const colorHex = batch.physicalAsset.colorHex || batch.physicalAsset.color || '#CCCCCC';
         
         // Extract type from material
         const type = batch.physicalAsset.material || 'N/A';
@@ -180,15 +176,17 @@ function renderBatchTable(batches, tableBodyId, onActionClick) {
             <td>${formatDate(batch.createdAt)}</td>
             <td>${type}</td>
             <td>
-                <span class="color-box" style="background-color: ${colorHex};"></span>
-                ${colorText}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="color-box" style="background-color: ${colorHex}; border: 1px solid #999; width: 24px; height: 24px; display: inline-block; border-radius: 4px; flex-shrink: 0;" title="${colorHex}"></span>
+                    <span style="white-space: nowrap;">${colorName}</span>
+                </div>
             </td>
             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${batch.physicalAsset.assetId}">
                 ${batch.physicalAsset.assetId || 'N/A'}
             </td>
             <td>${batch.physicalAsset.weight || 'N/A'}</td>
-            <td>${getStatusBadge(batch.status)}</td>
-            <td>
+            <td style="text-align: center; vertical-align: middle;">${getStatusBadge(batch.status)}</td>
+            <td style="text-align: center;">
                 <button class="select-btn" onclick="${onActionClick}(${batch.id})">Select</button>
             </td>
         `;

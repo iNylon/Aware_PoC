@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Product Passport - Aware™</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="aware-style.css">
+    <script src="batches.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
+                AWARE™
+            </div>
+            <div class="nav" id="sidebar-nav">
+                <a href="index.html">Home</a>
+                <a href="dpp.html" class="active">Digital Product Passport</a>
+            </div>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
+                    Logged in as: <strong id="username-display">-</strong>
+                </div>
+                <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 12px;">
+                    Role: <strong id="role-display">-</strong>
+                </div>
+                <button onclick="logout()" class="btn-secondary" style="width: 100%; font-size: 13px; background: #FF3300; color: white; border-radius: 20px; border: none;">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="topbar-inner">
+                    <div class="page-head">
+                        <div>
+                            <h1>Digital Product Passport</h1>
+                            <p>View and manage product passports for all approved batches.</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <section class="content">
+                <div class="shell">
+                    <!-- DPP Batches Table -->
+                    <div class="card--page">
+                        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">📋 All Product Passports</h3>
+                        
+                        <div class="filter-bar" style="margin-bottom: 20px;">
+                            <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..." oninput="filterBatches()">
+                            <select id="compositionFilter" onchange="filterBatches()">
+                                <option value="">Filter by Composition</option>
+                                <option value="Organic Silk">Organic Silk</option>
+                                <option value="Recycled Cotton">Recycled Cotton</option>
+                                <option value="Conventional Cotton">Conventional Cotton</option>
+                                <option value="Regenerative Cotton">Regenerative Cotton</option>
+                                <option value="Organic Cotton">Organic Cotton</option>
+                                <option value="Recycled Polyester">Recycled Polyester</option>
+                                <option value="Yarn">Yarn</option>
+                                <option value="Fiber">Fiber</option>
+                                <option value="Pellet">Pellet</option>
+                                <option value="Fabric">Fabric</option>
+                                <option value="Product">Product</option>
+                            </select>
+                            <select id="statusFilter" onchange="filterBatches()">
+                                <option value="">Filter by Status</option>
+                                <option value="0">Pending</option>
+                                <option value="1">Approved</option>
+                                <option value="2">Rejected</option>
+                                <option value="3">Certified</option>
+                            </select>
+                        </div>
+                        
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Color</th>
+                                        <th>Asset ID</th>
+                                        <th>Weight Kgs</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batches-tbody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allBatches = [];
+        let filteredBatches = [];
+
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch('/api/auth/session', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (!data.loggedIn) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                currentUser = data.user;
+                document.getElementById('username-display').textContent = currentUser.username;
+                document.getElementById('role-display').textContent = ROLE_LABELS[currentUser.role] || 'Unknown';
+
+                // Only allow Brand (Distributor=2) and Admin (4) roles
+                if (currentUser.role !== 2 && currentUser.role !== 4) {
+                    alert('Access denied. This page is only for brand users.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                loadBatches();
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadBatches() {
+            try {
+                const allBatchesFromBlockchain = await loadBatchesGlobally();
+                // Show all approved batches (status 1)
+                allBatches = allBatchesFromBlockchain.filter(batch => batch.status === 1);
+                filteredBatches = allBatches;
+                renderBatchTable(filteredBatches, 'batches-tbody', 'viewDPP');
+            } catch (error) {
+                console.error('Error loading batches:', error);
+            }
+        }
+
+        function filterBatches() {
+            const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
+            const compositionFilter = document.getElementById('compositionFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredBatches = allBatches.filter(batch => {
+                const matchesSearch = !searchTerm || 
+                    batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.material?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.batchNumber?.toLowerCase().includes(searchTerm);
+
+                const matchesComposition = !compositionFilter || 
+                    batch.physicalAsset.material === compositionFilter;
+
+                const matchesStatus = !statusFilter || 
+                    batch.status === parseInt(statusFilter);
+
+                return matchesSearch && matchesComposition && matchesStatus;
+            });
+
+            renderBatchTable(filteredBatches, 'batches-tbody', 'viewDPP');
+        }
+
+        function viewDPP(batchId) {
+            window.location.href = `dpp_details.html?id=${batchId}`;
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Override getStatusBadge from batches.js to match approve batches styling
+        function getStatusBadge(status) {
+            const statusLabels = {
+                0: 'Pending',
+                1: 'Approved',
+                2: 'Rejected',
+                3: 'Certified'
+            };
+            const statusClasses = {
+                0: 'status-pending',
+                1: 'status-approved',
+                2: 'status-rejected',
+                3: 'status-certified'
+            };
+            const label = statusLabels[status] || 'Unknown';
+            const className = statusClasses[status] || '';
+            return '<span class="status-badge ' + className + '">' + label + '</span>';
+        }
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
   <title>Aware™ Blockchain Platform</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="aware-style.css">
-  <script src="batches.js"></script>
+  <script src="batches.js?v=2"></script>
 </head>
 
 <body>
@@ -286,21 +286,30 @@
       const batch = allBatches.find(b => b.id === batchId);
       if (!batch) return;
 
+      // Helper function to show field only if it has value
+      const showField = (label, value) => {
+        if (value && value !== 'N/A' && value.trim() !== '') {
+          return `<div style="margin-bottom: 8px;"><strong>${label}:</strong> ${value}</div>`;
+        }
+        return '';
+      };
+
       const content = `
         <h2 style="margin-bottom: 24px;">Batch #${batch.id} Details</h2>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
           <!-- Physical Asset -->
           <div class="card" style="padding: 20px;">
             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📦 Physical Asset</h3>
             <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Asset ID:</strong> ${batch.physicalAsset.assetId || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Material:</strong> ${batch.physicalAsset.material || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Composition:</strong> ${batch.physicalAsset.composition || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Weight:</strong> ${batch.physicalAsset.weight || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Batch Number:</strong> ${batch.physicalAsset.batchNumber || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Production Date:</strong> ${batch.physicalAsset.productionDate || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Expiry Date:</strong> ${batch.physicalAsset.expiryDate || 'N/A'}</div>
+              ${showField('Date', batch.physicalAsset.productionDate)}
+              ${showField('Aware™ Asset ID', batch.physicalAsset.assetId)}
+              ${showField('Material', batch.physicalAsset.material)}
+              ${showField('Composition', batch.physicalAsset.composition)}
+              ${batch.physicalAsset.color ? '<div style="margin-bottom: 8px;"><strong>Color:</strong> <span class="color-box" style="background-color: ' + batch.physicalAsset.color + '; display: inline-block; width: 16px; height: 16px; border-radius: 3px; margin-right: 6px; vertical-align: middle; border: 1px solid #ddd;"></span>' + batch.physicalAsset.color + '</div>' : ''}
+              ${showField('Total Weight (Kgs)', batch.physicalAsset.weight)}
+              ${showField('Batch Number', batch.physicalAsset.batchNumber)}
+              ${showField('Supplier', batch.tracer.supplier)}
             </div>
           </div>
 
@@ -308,12 +317,12 @@
           <div class="card" style="padding: 20px;">
             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
             <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Supplier:</strong> ${batch.tracer.supplier || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Farm Location:</strong> ${batch.tracer.farmLocation || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Country:</strong> ${batch.tracer.country || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>GPS Coordinates:</strong> ${batch.tracer.gpsCoordinates || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Certifications:</strong> ${batch.tracer.certifications || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Harvest Date:</strong> ${batch.tracer.harvestDate || 'N/A'}</div>
+              ${showField('Aware™ Asset ID', batch.physicalAsset.assetId)}
+              ${batch.physicalAsset.assetId ? showField('Tracer Type', 'Aware') : ''}
+              ${showField('Farm Location', batch.tracer.farmLocation)}
+              ${showField('Country', batch.tracer.country)}
+              ${showField('Harvest Date', batch.tracer.harvestDate)}
+              ${!batch.physicalAsset.assetId && !batch.tracer.farmLocation && !batch.tracer.country && !batch.tracer.harvestDate ? '<div style="color: var(--muted); font-style: italic;">No tracer information provided</div>' : ''}
             </div>
           </div>
 
@@ -321,25 +330,23 @@
           <div class="card" style="padding: 20px;">
             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">✓ Validation</h3>
             <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Quality Grade:</strong> ${batch.validation.qualityGrade || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Moisture Content:</strong> ${batch.validation.moistureContent || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Contamination:</strong> ${batch.validation.contamination || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Inspection Date:</strong> ${batch.validation.inspectionDate || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Inspector:</strong> ${batch.validation.inspector || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Lab Results:</strong> ${batch.validation.labResults || 'N/A'}</div>
+              ${showField('Validation Type', batch.validation.inspector || 'Self-Validation')}
+              ${showField('Status', 'Success')}
+              ${showField('Contamination', batch.validation.contamination)}
+              ${showField('Inspection Date', batch.validation.inspectionDate)}
+              ${!batch.validation.contamination && !batch.validation.inspectionDate && !batch.validation.inspector ? '<div style="color: var(--muted); font-style: italic;">No validation data provided</div>' : ''}
             </div>
           </div>
 
           <!-- Compliance -->
           <div class="card" style="padding: 20px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📋 Compliance</h3>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📋 Company Compliances</h3>
             <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Regulatory Standards:</strong> ${batch.compliance.regulatoryStandards || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Sustainability Cert:</strong> ${batch.compliance.sustainabilityCert || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Fair Trade Cert:</strong> ${batch.compliance.fairTradeCert || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Organic Cert:</strong> ${batch.compliance.organicCert || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Carbon Footprint:</strong> ${batch.compliance.carbonFootprint || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Water Usage:</strong> ${batch.compliance.waterUsage || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>🌿 Environmental:</strong> ${batch.compliance.sustainabilityCert || 'None'}</div>
+              <div style="margin-bottom: 8px;"><strong>🤝 Social:</strong> ${batch.compliance.fairTradeCert || 'None'}</div>
+              <div style="margin-bottom: 8px;"><strong>🧪 Chemical:</strong> None</div>
+              ${showField('Carbon Footprint', batch.compliance.carbonFootprint)}
+              ${showField('Water Usage', batch.compliance.waterUsage)}
             </div>
           </div>
         </div>
@@ -390,6 +397,7 @@
         navHtml += `
           <a href="create_token.html">Create Token</a>
           <a href="update_token.html">Update Token</a>
+          <a href="wallet.html">Wallet</a>
         `;
       }
 
@@ -398,9 +406,9 @@
         navHtml += '<a href="batch_approve.html">Approve Batches</a>';
       }
 
-      // Brand (Distributor) can only approve/view
+      // Brand (Distributor) can only view DPP
       if (currentUser.role === ROLES.DISTRIBUTOR) {
-        navHtml += '<a href="batch_approve.html">Approve Batches</a>';
+        navHtml += '<a href="dpp.html">Digital Product Passport</a>';
       }
 
       // Admin has all options
@@ -502,6 +510,25 @@
       }
 
       quickActions.innerHTML = actionsHtml;
+    }
+
+    // Override getStatusBadge from batches.js to match approve batches styling
+    function getStatusBadge(status) {
+      const statusLabels = {
+        0: 'Pending',
+        1: 'Approved',
+        2: 'Rejected',
+        3: 'Certified'
+      };
+      const statusClasses = {
+        0: 'status-pending',
+        1: 'status-approved',
+        2: 'status-rejected',
+        3: 'status-certified'
+      };
+      const label = statusLabels[status] || 'Unknown';
+      const className = statusClasses[status] || '';
+      return '<span class="status-badge ' + className + '">' + label + '</span>';
     }
   </script>
 </body>

@@ -187,10 +187,11 @@
         <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
         AWARE™
       </div>
-      <div class="nav">
+      <div class="nav" id="sidebar-nav">
         <a href="index.html">Home</a>
         <a href="create_token.html">Create Token</a>
         <a href="update_token.html">Update Token</a>
+        <a href="wallet.html" class="active">Wallet</a>
       </div>
       <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(245,245,245,.1);">
         <div style="color: rgba(245,245,245,.6); font-size: 12px; margin-bottom: 8px;">
@@ -222,16 +223,16 @@
         <div class="shell">
           <div class="card--page">
             <!-- Wallet ID -->
-            <div class="wallet-id">
-              Wallet ID: io1hra3d0anzhwmz70mrslu75lks35p3vw624ug6l
+            <div class="wallet-id" id="walletAddress">
+              Wallet ID: Loading...
             </div>
 
             <!-- Balance Section -->
             <div class="balance-section">
               <div class="balance-title">Balance</div>
               <div class="balance-subtitle">Equal to</div>
-              <div class="balance-amount">14450 Aware™ Tokens</div>
-              <div class="balance-meta">14450 kilo of assets</div>
+              <div class="balance-amount">0 Aware™ Tokens</div>
+              <div class="balance-meta">0 kilo of assets</div>
             </div>
 
             <!-- Tokens Grid -->
@@ -270,8 +271,8 @@
                   <div class="token-type">Kilo</div>
                 </div>
                 <div class="token-balance">
-                  <div class="token-amount">14450 AWR</div>
-                  <div class="token-weight">14450 kgs</div>
+                  <div class="token-amount">0 AWR</div>
+                  <div class="token-weight">0 kgs</div>
                 </div>
               </div>
 
@@ -302,178 +303,26 @@
               </div>
             </div>
           </div>
-
-          <!-- Batches Section -->
-          <div class="card--page" style="margin-top: 30px;">
-            <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">📦 My Blockchain Batches</h3>
-            
-            <div class="filter-bar">
-              <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..." oninput="filterWalletBatches()">
-              <select id="statusFilter" onchange="filterWalletBatches()">
-                <option value="">All Statuses</option>
-                <option value="0">Pending</option>
-                <option value="1">Approved</option>
-                <option value="2">Rejected</option>
-                <option value="3">Certified</option>
-              </select>
-              <button class="btn-primary" onclick="loadWalletBatches()">🔄 Refresh</button>
-            </div>
-
-            <div id="wallet-loading-message" style="text-align: center; padding: 40px; color: var(--muted);">
-              Loading batches from blockchain...
-            </div>
-
-            <div id="wallet-batches-container" style="display: none;">
-              <div style="overflow-x: auto; margin-top: 15px;">
-                <table class="batch-table" id="walletBatchTable">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Color</th>
-                      <th>Asset ID</th>
-                      <th>Weight Kgs</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="walletBatchTableBody">
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div id="wallet-no-batches" style="display: none; text-align: center; padding: 40px;">
-              <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-              <h3 style="margin-bottom: 8px;">No batches found</h3>
-              <p style="color: var(--muted); margin-bottom: 20px;">No batches available yet.</p>
-              <a href="create_token.html" class="btn-primary">Create First Batch</a>
-            </div>
-          </div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Batch Details Modal -->
-  <div id="batchModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeBatchModal(event)">
-    <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: var(--r-lg); padding: 30px; position: relative;" onclick="event.stopPropagation()">
-      <button onclick="closeBatchModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);">&times;</button>
-      <div id="batchModalContent"></div>
-    </div>
-  </div>
-
   <script src="batches.js"></script>
   <script>
     let currentUser = null;
-    let allWalletBatches = [];
-    let filteredWalletBatches = [];
-
-    // Load batches from blockchain
-    async function loadWalletBatches() {
-      try {
-        document.getElementById('wallet-loading-message').style.display = 'block';
-        document.getElementById('wallet-batches-container').style.display = 'none';
-        document.getElementById('wallet-no-batches').style.display = 'none';
-
-        allWalletBatches = await loadBatchesGlobally();
-        filteredWalletBatches = [...allWalletBatches];
-
-        document.getElementById('wallet-loading-message').style.display = 'none';
-
-        if (allWalletBatches.length === 0) {
-          document.getElementById('wallet-no-batches').style.display = 'block';
-        } else {
-          document.getElementById('wallet-batches-container').style.display = 'block';
-          renderBatchTable(filteredWalletBatches, 'walletBatchTableBody', 'viewWalletBatchDetails');
-        }
-      } catch (error) {
-        console.error('Error loading wallet batches:', error);
-        document.getElementById('wallet-loading-message').innerHTML = `
-          <div style="color: #f44336;">
-            Error loading batches. Please make sure the blockchain is running.
-          </div>
-        `;
-      }
-    }
-
-    function filterWalletBatches() {
-      const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
-      const statusFilter = document.getElementById('statusFilter').value;
-
-      filteredWalletBatches = allWalletBatches.filter(batch => {
-        const matchesSearch = !searchTerm || (
-          batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
-          batch.physicalAsset.material?.toLowerCase().includes(searchTerm)
-        );
-
-        const matchesStatus = !statusFilter || batch.status === parseInt(statusFilter);
-
-        return matchesSearch && matchesStatus;
-      });
-
-      renderBatchTable(filteredWalletBatches, 'walletBatchTableBody', 'viewWalletBatchDetails');
-    }
-
-    function viewWalletBatchDetails(batchId) {
-      const batch = allWalletBatches.find(b => b.id === batchId);
-      if (!batch) return;
-
-      const content = `
-        <h2 style="margin-bottom: 24px;">Batch #${batch.id} Details</h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
-          <div class="card" style="padding: 20px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">📦 Physical Asset</h3>
-            <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Asset ID:</strong> ${batch.physicalAsset.assetId || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Material:</strong> ${batch.physicalAsset.material || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Composition:</strong> ${batch.physicalAsset.composition || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Weight:</strong> ${batch.physicalAsset.weight || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Batch Number:</strong> ${batch.physicalAsset.batchNumber || 'N/A'}</div>
-            </div>
-          </div>
-
-          <div class="card" style="padding: 20px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
-            <div style="font-size: 13px;">
-              <div style="margin-bottom: 8px;"><strong>Supplier:</strong> ${batch.tracer.supplier || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Farm Location:</strong> ${batch.tracer.farmLocation || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Country:</strong> ${batch.tracer.country || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>GPS Coordinates:</strong> ${batch.tracer.gpsCoordinates || 'N/A'}</div>
-              <div style="margin-bottom: 8px;"><strong>Certifications:</strong> ${batch.tracer.certifications || 'N/A'}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="padding: 20px; margin-top: 20px;">
-          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">ℹ️ Batch Status</h3>
-          <div style="font-size: 13px;">
-            <div style="margin-bottom: 8px;"><strong>Status:</strong> ${getStatusBadge(batch.status)}</div>
-            <div style="margin-bottom: 8px;"><strong>Created By:</strong> ${batch.createdByName || 'Unknown'}</div>
-            <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateTime(batch.createdAt)}</div>
-          </div>
-        </div>
-
-        <div style="margin-top: 20px; text-align: center;">
-          <button onclick="closeBatchModal()" class="btn-secondary">Close</button>
-        </div>
-      `;
-
-      document.getElementById('batchModalContent').innerHTML = content;
-      document.getElementById('batchModal').style.display = 'block';
-    }
-
-    function closeBatchModal(event) {
-      if (!event || event.target.id === 'batchModal') {
-        document.getElementById('batchModal').style.display = 'none';
-      }
-    }
+    let tokenBalances = {
+      pellet: 0,
+      fiber: 0,
+      yarn: 0,
+      fabric: 0,
+      product: 0
+    };
 
     // Check authentication on page load
     window.addEventListener('load', async () => {
       await checkAuthentication();
-      loadWalletBatches();
+      await loadTokenBalances();
     });
 
     async function checkAuthentication() {
@@ -481,21 +330,124 @@
         const response = await fetch('/api/auth/session', {
           credentials: 'include'
         });
+        
+        if (!response.ok) {
+          console.error('Session check failed with status:', response.status);
+          window.location.href = 'login.html';
+          return;
+        }
+        
         const data = await response.json();
         
         if (!data.loggedIn) {
+          console.log('User not logged in, redirecting to login');
           window.location.href = 'login.html';
           return;
         }
 
         currentUser = data.user;
+        console.log('Current user:', currentUser);
+        
+        // Only allow producers
+        if (currentUser.role !== 0) {
+          alert('Access denied. Wallet is only accessible for producers.');
+          window.location.href = 'index.html';
+          return;
+        }
+        
         document.getElementById('username-display').textContent = currentUser.username;
         const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
         document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
+        
+        // Display wallet address
+        try {
+          const walletResponse = await fetch('/api/wallet/address', {
+            credentials: 'include'
+          });
+          console.log('Wallet response status:', walletResponse.status);
+          
+          if (walletResponse.ok) {
+            const walletText = await walletResponse.text();
+            console.log('Wallet response text:', walletText);
+            
+            try {
+              const walletData = JSON.parse(walletText);
+              if (walletData.address) {
+                document.getElementById('walletAddress').textContent = 'Wallet ID: ' + walletData.address;
+              }
+            } catch (parseError) {
+              console.error('Failed to parse wallet response:', parseError);
+              console.error('Response was:', walletText);
+            }
+          } else {
+            const errorText = await walletResponse.text();
+            console.error('Failed to load wallet address. Status:', walletResponse.status, 'Response:', errorText);
+          }
+        } catch (walletError) {
+          console.error('Error loading wallet address:', walletError);
+        }
       } catch (error) {
         console.error('Auth check error:', error);
         window.location.href = 'login.html';
       }
+    }
+    
+    async function loadTokenBalances() {
+      try {
+        const response = await fetch('/api/wallet/balances', {
+          credentials: 'include'
+        });
+        
+        console.log('Token balances response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to load token balances. Status:', response.status, 'Response:', errorText);
+          return;
+        }
+        
+        const responseText = await response.text();
+        console.log('Token balances response text:', responseText);
+        
+        try {
+          const data = JSON.parse(responseText);
+          console.log('Token balances data:', data);
+          
+          if (data.balances) {
+            tokenBalances = data.balances;
+            updateTokenDisplay();
+          }
+        } catch (parseError) {
+          console.error('Failed to parse token balances response:', parseError);
+          console.error('Response was:', responseText);
+        }
+      } catch (error) {
+        console.error('Error loading token balances:', error);
+      }
+    }
+    
+    function updateTokenDisplay() {
+      const total = tokenBalances.pellet + tokenBalances.fiber + tokenBalances.yarn + tokenBalances.fabric + tokenBalances.product;
+      
+      document.querySelector('.balance-amount').textContent = `${total} Aware™ Tokens`;
+      document.querySelector('.balance-meta').textContent = `${total} kilo of assets`;
+      
+      // Update individual token cards
+      const tokenCards = document.querySelectorAll('.token-card');
+      tokenCards[0].querySelector('.token-amount').textContent = `${tokenBalances.pellet} AWR`;
+      tokenCards[0].querySelector('.token-weight').textContent = `${tokenBalances.pellet} kgs`;
+      
+      tokenCards[1].querySelector('.token-amount').textContent = `${tokenBalances.fiber} AWR`;
+      tokenCards[1].querySelector('.token-weight').textContent = `${tokenBalances.fiber} kgs`;
+      
+      tokenCards[2].querySelector('.token-amount').textContent = `${tokenBalances.yarn} AWR`;
+      tokenCards[2].querySelector('.token-weight').textContent = `${tokenBalances.yarn} kgs`;
+      
+      tokenCards[3].querySelector('.token-amount').textContent = `${tokenBalances.fabric} AWR`;
+      tokenCards[3].querySelector('.token-weight').textContent = `${tokenBalances.fabric} kgs`;
+      
+      tokenCards[4].querySelector('.token-amount').textContent = `${tokenBalances.product} AWR`;
+      tokenCards[4].querySelector('.token-weight').textContent = `${tokenBalances.product} kgs`;
     }
 
     async function logout() {

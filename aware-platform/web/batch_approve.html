@@ -47,32 +47,58 @@
             </header>
 
             <!-- Main Content -->
-            <div class="container">
-                <!-- Batches Table -->
-                <div class="card">
-                    <div style="padding: 20px; border-bottom: 1px solid var(--border);">
-                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">All Batches</h2>
-                    </div>
-                    <div class="batch-table-container">
-                        <table class="batch-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Color</th>
-                                    <th>Asset ID</th>
-                                    <th>Weight Kgs</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="batches-tbody">
-                                <!-- Will be populated by JavaScript -->
-                            </tbody>
-                        </table>
+            <section class="content">
+                <div class="shell">
+                    <!-- Batches Table -->
+                    <div class="card--page">
+                        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700;">All Batches</h3>
+                        
+                        <div class="filter-bar" style="margin-bottom: 20px;">
+                            <input type="text" id="searchBatch" placeholder="🔍 Search by Asset ID..." oninput="filterBatches()">
+                            <select id="compositionFilter" onchange="filterBatches()">
+                                <option value="">Filter by Composition</option>
+                                <option value="Organic Silk">Organic Silk</option>
+                                <option value="Recycled Cotton">Recycled Cotton</option>
+                                <option value="Conventional Cotton">Conventional Cotton</option>
+                                <option value="Regenerative Cotton">Regenerative Cotton</option>
+                                <option value="Organic Cotton">Organic Cotton</option>
+                                <option value="Recycled Polyester">Recycled Polyester</option>
+                                <option value="Yarn">Yarn</option>
+                                <option value="Fiber">Fiber</option>
+                                <option value="Pellet">Pellet</option>
+                                <option value="Fabric">Fabric</option>
+                                <option value="Product">Product</option>
+                            </select>
+                            <select id="statusFilter" onchange="filterBatches()">
+                                <option value="">Filter by Status</option>
+                                <option value="0">Pending</option>
+                                <option value="1">Approved</option>
+                                <option value="2">Rejected</option>
+                                <option value="3">Certified</option>
+                            </select>
+                        </div>
+                        
+                        <div style="overflow-x: auto;">
+                            <table class="batch-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Color</th>
+                                        <th>Asset ID</th>
+                                        <th>Weight Kgs</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batches-tbody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </main>
     </div>
 
@@ -88,6 +114,8 @@
         // ROLES and ROLE_LABELS are defined in batches.js
         let currentUser = null;
         let currentBatch = null;
+        let allBatches = [];
+        let filteredBatches = [];
 
         window.addEventListener('load', async function() {
             try {
@@ -127,11 +155,37 @@
 
         async function loadBatches() {
             try {
-                const batches = await loadBatchesGlobally();
-                renderBatchTable(batches, 'batches-tbody', 'showBatchDetails');
+                const allBatchesFromBlockchain = await loadBatchesGlobally();
+                // Only show pending batches (status 0)
+                allBatches = allBatchesFromBlockchain.filter(batch => batch.status === 0);
+                filteredBatches = allBatches;
+                renderBatchTable(filteredBatches, 'batches-tbody', 'showBatchDetails');
             } catch (error) {
                 console.error('Error loading batches:', error);
             }
+        }
+
+        function filterBatches() {
+            const searchTerm = document.getElementById('searchBatch').value.toLowerCase();
+            const compositionFilter = document.getElementById('compositionFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredBatches = allBatches.filter(batch => {
+                const matchesSearch = !searchTerm || 
+                    batch.physicalAsset.assetId?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.material?.toLowerCase().includes(searchTerm) ||
+                    batch.physicalAsset.batchNumber?.toLowerCase().includes(searchTerm);
+
+                const matchesComposition = !compositionFilter || 
+                    batch.physicalAsset.material === compositionFilter;
+
+                const matchesStatus = !statusFilter || 
+                    batch.status === parseInt(statusFilter);
+
+                return matchesSearch && matchesComposition && matchesStatus;
+            });
+
+            renderBatchTable(filteredBatches, 'batches-tbody', 'showBatchDetails');
         }
 
         function showBatchDetails(batchId) {
@@ -252,13 +306,11 @@
                         <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">🌍 Tracer Information</h3>
                         <div style="font-size: 13px;">
                             ${showField('Aware™ Asset ID', batch.physicalAsset.assetId)}
-                            ${showField('Tracer Added', batch.tracer.certifications ? 'Yes' : 'No')}
+                            ${batch.physicalAsset.assetId ? showField('Tracer Type', 'Aware') : ''}
                             ${showField('Farm Location', batch.tracer.farmLocation)}
                             ${showField('Country', batch.tracer.country)}
-                            ${showField('GPS Coordinates', batch.tracer.gpsCoordinates)}
-                            ${showField('Certifications', batch.tracer.certifications)}
                             ${showField('Harvest Date', batch.tracer.harvestDate)}
-                            ${!batch.physicalAsset.assetId && !batch.tracer.farmLocation && !batch.tracer.country && !batch.tracer.gpsCoordinates && !batch.tracer.certifications && !batch.tracer.harvestDate ? '<div style="color: var(--muted); font-style: italic;">No tracer information provided</div>' : ''}
+                            ${!batch.physicalAsset.assetId && !batch.tracer.farmLocation && !batch.tracer.country && !batch.tracer.harvestDate ? '<div style="color: var(--muted); font-style: italic;">No tracer information provided</div>' : ''}
                         </div>
                     </div>
 
@@ -267,11 +319,10 @@
                         <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--scarlet);">✓ Validation</h3>
                         <div style="font-size: 13px;">
                             ${showField('Validation Type', batch.validation.inspector || 'Self-Validation')}
-                            ${showField('Quality Grade', batch.validation.qualityGrade)}
-                            ${showField('Moisture Content', batch.validation.moistureContent)}
+                            ${showField('Status', 'Success')}
                             ${showField('Contamination', batch.validation.contamination)}
                             ${showField('Inspection Date', batch.validation.inspectionDate)}
-                            ${!batch.validation.qualityGrade && !batch.validation.moistureContent && !batch.validation.contamination && !batch.validation.inspectionDate && !batch.validation.inspector ? '<div style="color: var(--muted); font-style: italic;">No validation data provided</div>' : ''}
+                            ${!batch.validation.contamination && !batch.validation.inspectionDate && !batch.validation.inspector ? '<div style="color: var(--muted); font-style: italic;">No validation data provided</div>' : ''}
                         </div>
                     </div>
 

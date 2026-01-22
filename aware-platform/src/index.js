@@ -26,6 +26,47 @@ let blockchainReady = false;
 // Wallet for server-side transactions (will create wallets for each logged-in user)
 const userWallets = new Map(); // username -> { wallet, address }
 
+// Token balances tracking per user
+const userTokenBalances = new Map(); // username -> { pellet, fiber, yarn, fabric, product }
+
+// Initialize token balance for a user
+function initializeTokenBalance(username) {
+  if (!userTokenBalances.has(username)) {
+    userTokenBalances.set(username, {
+      pellet: 0,
+      fiber: 0,
+      yarn: 0,
+      fabric: 0,
+      product: 0
+    });
+  }
+}
+
+// Add tokens to user balance based on token type and weight
+function addTokensToUser(username, tokenType, weight) {
+  initializeTokenBalance(username);
+  const balances = userTokenBalances.get(username);
+  
+  const normalizedType = (tokenType || '').toLowerCase();
+  
+  if (normalizedType.includes('pellet')) {
+    balances.pellet += weight;
+  } else if (normalizedType.includes('fiber')) {
+    balances.fiber += weight;
+  } else if (normalizedType.includes('yarn')) {
+    balances.yarn += weight;
+  } else if (normalizedType.includes('fabric')) {
+    balances.fabric += weight;
+  } else if (normalizedType.includes('product')) {
+    balances.product += weight;
+  } else {
+    // Default to yarn if type not recognized
+    balances.yarn += weight;
+  }
+  
+  userTokenBalances.set(username, balances);
+}
+
 // Load blockchain contract
 function loadContract() {
   try {
@@ -435,6 +476,42 @@ app.post('/api/batches/:id/approve', async (req, res) => {
     const contractWithSigner = contract.connect(userWallet.wallet);
     const tx = await contractWithSigner.approveBatch(batchId);
     const receipt = await tx.wait();
+    
+    // Get batch details to award tokens
+    try {
+      const basicInfo = await contract.getBatchBasicInfo(batchId);
+      const physicalAsset = await contract.getBatchPhysicalAsset(batchId);
+      
+      console.log('=== Batch Approval Token Award ===');
+      console.log('Batch ID:', batchId);
+      console.log('Basic Info:', basicInfo);
+      console.log('Physical Asset:', physicalAsset);
+      
+      let creatorUsername = basicInfo[2]; // createdByName
+      // Strip '_wallet' suffix if present to match session username
+      if (creatorUsername && creatorUsername.endsWith('_wallet')) {
+        creatorUsername = creatorUsername.replace('_wallet', '');
+      }
+      const tokenType = physicalAsset.tokenType || physicalAsset.material || 'Yarn';
+      const weight = parseInt(physicalAsset.weight) || 0;
+      
+      console.log('Token award details:');
+      console.log('  - Creator:', creatorUsername);
+      console.log('  - Token Type:', tokenType);
+      console.log('  - Weight:', weight);
+      
+      // Award tokens to the batch creator
+      if (creatorUsername && weight > 0) {
+        addTokensToUser(creatorUsername, tokenType, weight);
+        console.log(`✅ Awarded ${weight} ${tokenType} tokens to ${creatorUsername}`);
+      } else {
+        console.log(`⚠️ Cannot award tokens: creatorUsername=${creatorUsername}, weight=${weight}`);
+      }
+      console.log('=================================');
+    } catch (tokenError) {
+      console.error('Error awarding tokens:', tokenError);
+      // Don't fail the approval if token award fails
+    }
 
     res.json({
       success: true,
@@ -610,6 +687,42 @@ app.post('/batch/:id/approve', async (req, res) => {
     const contractWithSigner = contract.connect(userWallet.wallet);
     const tx = await contractWithSigner.approveBatch(batchId);
     const receipt = await tx.wait();
+    
+    // Get batch details to award tokens
+    try {
+      const basicInfo = await contract.getBatchBasicInfo(batchId);
+      const physicalAsset = await contract.getBatchPhysicalAsset(batchId);
+      
+      console.log('=== Batch Approval Token Award (Alt Route) ===');
+      console.log('Batch ID:', batchId);
+      console.log('Basic Info:', basicInfo);
+      console.log('Physical Asset:', physicalAsset);
+      
+      let creatorUsername = basicInfo[2]; // createdByName
+      // Strip '_wallet' suffix if present to match session username
+      if (creatorUsername && creatorUsername.endsWith('_wallet')) {
+        creatorUsername = creatorUsername.replace('_wallet', '');
+      }
+      const tokenType = physicalAsset.tokenType || physicalAsset.material || 'Yarn';
+      const weight = parseInt(physicalAsset.weight) || 0;
+      
+      console.log('Token award details:');
+      console.log('  - Creator:', creatorUsername);
+      console.log('  - Token Type:', tokenType);
+      console.log('  - Weight:', weight);
+      
+      // Award tokens to the batch creator
+      if (creatorUsername && weight > 0) {
+        addTokensToUser(creatorUsername, tokenType, weight);
+        console.log(`✅ Awarded ${weight} ${tokenType} tokens to ${creatorUsername}`);
+      } else {
+        console.log(`⚠️ Cannot award tokens: creatorUsername=${creatorUsername}, weight=${weight}`);
+      }
+      console.log('============================================');
+    } catch (tokenError) {
+      console.error('Error awarding tokens:', tokenError);
+      // Don't fail the approval if token award fails
+    }
 
     res.json({
       success: true,
@@ -683,6 +796,67 @@ app.post('/batch/:id/certify', async (req, res) => {
     });
   } catch (error) {
     console.error('Certify batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== WALLET ENDPOINTS ====================
+
+// Get wallet address
+app.get('/api/wallet/address', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      console.error('Wallet address: No session user');
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const username = req.session.user.username;
+    console.log(`Getting wallet address for user: ${username}`);
+    
+    const userWallet = userWallets.get(username);
+    
+    if (!userWallet) {
+      console.log(`Wallet not found in memory for ${username}, using blockchain address from session`);
+      // Fallback to blockchain address from session
+      if (req.session.user.address) {
+        return res.json({
+          address: req.session.user.address
+        });
+      }
+      return res.status(500).json({ error: 'Wallet not found' });
+    }
+
+    console.log(`Wallet address for ${username}: ${userWallet.address}`);
+    res.json({
+      address: userWallet.address
+    });
+  } catch (error) {
+    console.error('Get wallet address error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get token balances
+app.get('/api/wallet/balances', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      console.error('Token balances: No session user');
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const username = req.session.user.username;
+    console.log(`Getting token balances for user: ${username}`);
+    
+    initializeTokenBalance(username);
+    const balances = userTokenBalances.get(username);
+    
+    console.log(`Token balances for ${username}:`, balances);
+
+    res.json({
+      balances: balances
+    });
+  } catch (error) {
+    console.error('Get token balances error:', error);
     res.status(500).json({ error: error.message });
   }
 });

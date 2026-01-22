@@ -19,7 +19,7 @@
                 <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
                 AWARE™
             </div>
-            <div class="nav">
+            <div class="nav" id="sidebar-nav">
                 <a href="index.html">Home</a>
                 <a href="create_token.html">Create Token</a>
                 <a href="update_token.html" class="active">Update Token</a>
@@ -2340,6 +2340,9 @@ Now update ALL fields based on the changes described above.`
                 const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
                 document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
                 
+                // Update sidebar navigation
+                updateSidebarForRole();
+                
                 // Only allow Producer and Admin roles to update batches
                 if (currentUser.role !== 0 && currentUser.role !== 4) {
                     alert('Access denied. Only producers can update batches.');
@@ -2350,6 +2353,46 @@ Now update ALL fields based on the changes described above.`
                 console.error('Auth check error:', error);
                 window.location.href = 'login.html';
             }
+        }
+        
+        function updateSidebarForRole() {
+            const sidebarNav = document.getElementById('sidebar-nav');
+            if (!currentUser) return;
+
+            const ROLES = {
+                PRODUCER: 0,
+                MANUFACTURER: 1,
+                DISTRIBUTOR: 2,
+                CERTIFIER: 3,
+                ADMIN: 4
+            };
+
+            let navHtml = '<a href="index.html">Home</a>';
+
+            // Producer can create and update batches
+            if (currentUser.role === ROLES.PRODUCER) {
+                navHtml += `
+                    <a href="create_token.html">Create Token</a>
+                    <a href="update_token.html" class="active">Update Token</a>
+                    <a href="wallet.html">Wallet</a>
+                `;
+            }
+
+            // Brand (Distributor) can only view DPP
+            if (currentUser.role === ROLES.DISTRIBUTOR) {
+                navHtml += '<a href="dpp.html">Digital Product Passport</a>';
+            }
+
+            // Admin has all options
+            if (currentUser.role === ROLES.ADMIN) {
+                navHtml += `
+                    <a href="create_token.html">Create Token</a>
+                    <a href="update_token.html" class="active">Update Token</a>
+                    <a href="batch_approve.html">Approve Batches</a>
+                `;
+            }
+
+            sidebarNav.innerHTML = navHtml;
         }
 
         async function logout() {
@@ -2362,6 +2405,25 @@ Now update ALL fields based on the changes described above.`
             } catch (error) {
                 console.error('Logout error:', error);
             }
+        }
+
+        // Override getStatusBadge from batches.js to match approve batches styling
+        function getStatusBadge(status) {
+            const statusLabels = {
+                0: 'Pending',
+                1: 'Approved',
+                2: 'Rejected',
+                3: 'Certified'
+            };
+            const statusClasses = {
+                0: 'status-pending',
+                1: 'status-approved',
+                2: 'status-rejected',
+                3: 'status-certified'
+            };
+            const label = statusLabels[status] || 'Unknown';
+            const className = statusClasses[status] || '';
+            return '<span class="status-badge ' + className + '">' + label + '</span>';
         }
     </script>
                     </div>

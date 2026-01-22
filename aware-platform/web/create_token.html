@@ -18,7 +18,7 @@
                 <img src="aware-logo.png" alt="AWARE" style="width: 28px; height: 28px; display: inline-block; vertical-align: middle; margin-right: 8px;">
                 AWARE™
             </div>
-            <div class="nav">
+            <div class="nav" id="sidebar-nav">
                 <a href="index.html">Home</a>
                 <a href="create_token.html" class="active">Create Token</a>
                 <a href="update_token.html">Update Token</a>
@@ -514,6 +514,9 @@
                 const roles = ['Producer', 'Manufacturer', 'Distributor', 'Certifier', 'Admin'];
                 document.getElementById('role-display').textContent = roles[currentUser.role] || 'Unknown';
                 
+                // Update sidebar navigation
+                updateSidebarForRole();
+                
                 // Only allow Producer and Admin roles to create batches
                 if (currentUser.role !== 0 && currentUser.role !== 4) {
                     alert('Access denied. Only producers can create batches.');
@@ -524,6 +527,46 @@
                 console.error('Auth check error:', error);
                 window.location.href = 'login.html';
             }
+        }
+        
+        function updateSidebarForRole() {
+            const sidebarNav = document.getElementById('sidebar-nav');
+            if (!currentUser) return;
+
+            const ROLES = {
+                PRODUCER: 0,
+                MANUFACTURER: 1,
+                DISTRIBUTOR: 2,
+                CERTIFIER: 3,
+                ADMIN: 4
+            };
+
+            let navHtml = '<a href="index.html">Home</a>';
+
+            // Producer can create and update batches
+            if (currentUser.role === ROLES.PRODUCER) {
+                navHtml += `
+                    <a href="create_token.html" class="active">Create Token</a>
+                    <a href="update_token.html">Update Token</a>
+                    <a href="wallet.html">Wallet</a>
+                `;
+            }
+
+            // Brand (Distributor) can only view DPP
+            if (currentUser.role === ROLES.DISTRIBUTOR) {
+                navHtml += '<a href="dpp.html">Digital Product Passport</a>';
+            }
+
+            // Admin has all options
+            if (currentUser.role === ROLES.ADMIN) {
+                navHtml += `
+                    <a href="create_token.html" class="active">Create Token</a>
+                    <a href="update_token.html">Update Token</a>
+                    <a href="batch_approve.html">Approve Batches</a>
+                `;
+            }
+
+            sidebarNav.innerHTML = navHtml;
         }
 
         async function logout() {
@@ -810,15 +853,20 @@
                 }
             }
             
-            // Use compositionDetails for composition
+            // Synchronize composition and compositionDetails bidirectionally
             if (currentData.compositionDetails && currentData.compositionDetails.length > 0) {
                 currentData.composition = currentData.compositionDetails;
-            } else if (!currentData.composition || currentData.composition.length === 0) {
-                currentData.composition = currentData.compositionDetails || [];
+            } else if (currentData.composition && currentData.composition.length > 0) {
+                // If composition exists but compositionDetails doesn't, sync it
+                currentData.compositionDetails = currentData.composition;
+            } else {
+                currentData.composition = [];
+                currentData.compositionDetails = [];
             }
             
             console.log('Initialized suppliers:', currentData.suppliers);
             console.log('Initialized composition:', currentData.composition);
+            console.log('Initialized compositionDetails:', currentData.compositionDetails);
             
             if (currentData.compliance?.selectedCerts) {
                 currentData.compliances = currentData.compliance.selectedCerts;
@@ -827,6 +875,28 @@
             }
             
             currentData.validationType = currentData.validation?.validationType || 'Self-Validation';
+            
+            // Initialize validationDetails from existing validation data if not already present
+            if (!currentData.validationDetails || currentData.validationDetails.length === 0) {
+                if (currentData.validation) {
+                    currentData.validationDetails = [{
+                        material: currentData.tokenType || currentData.physicalAsset?.material || '',
+                        claim: currentData.validation.qualityGrade || currentData.materialSpec || '',
+                        weightKgs: currentData.weight || currentData.physicalAsset?.weight || '',
+                        kgs: currentData.weight || currentData.physicalAsset?.weight || '',
+                        feedstockType: (currentData.physicalAsset?.materialSpec || currentData.physicalAsset?.material || '').toLowerCase().includes('organic') ? 'Organic' : 'Conventional',
+                        feedstockSourceType: 'Manufacturing Plant',
+                        sourceName: currentData.physicalAsset?.productionFacility || currentData.tracer?.supplier || '',
+                        address: currentData.physicalAsset?.productionFacility || currentData.tracer?.supplier || '',
+                        sourceCertification: currentData.compliances?.[0] || '',
+                        invoiceNo: `INV-${currentData.physicalAsset?.batchNumber || Date.now()}`,
+                        invoiceDate: currentData.validation.inspectionDate || currentData.physicalAsset?.productionDate || '',
+                        fullName: currentData.validation.inspector || currentData.validation.fullName || currentData.createdByName || 'Self-Validation'
+                    }];
+                }
+            }
+            
+            console.log('Initialized validationDetails:', currentData.validationDetails);
 
             try {
                 // Send request to local proxy. The proxy will forward to Ollama running locally.
@@ -992,7 +1062,11 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
                     if (predictedData.valueChainSub) currentData.valueChainSub = predictedData.valueChainSub;
                     if (predictedData.sustainableClaims) currentData.sustainableClaims = predictedData.sustainableClaims;
                     if (predictedData.wetProcessing) currentData.wetProcessing = predictedData.wetProcessing;
-                    if (predictedData.composition) currentData.composition = predictedData.composition;
+                    if (predictedData.composition) {
+                        currentData.composition = predictedData.composition;
+                        // Also set compositionDetails for the form
+                        currentData.compositionDetails = predictedData.composition;
+                    }
                     if (predictedData.suppliers) currentData.suppliers = predictedData.suppliers;
                     if (predictedData.compliances) currentData.compliances = predictedData.compliances;
                     if (predictedData.tracerType) currentData.tracer = predictedData.tracerType;
@@ -1334,7 +1408,11 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
             }
 
             // Parse composition - improved regex patterns
-            currentData.composition = [];
+            // Only reset composition if explicitly mentioned in changes
+            const hasCompositionChange = /composition|material|cotton|polyester|hemp|linen|silk|wool|bamboo|tencel|nylon|\d+\s*%/i.test(changesText);
+            if (hasCompositionChange) {
+                currentData.composition = [];
+            }
 
             // Look for organic cotton
             const organicCottonMatch = text.match(/(\d+)\s*%\s*organic\s+cotton/i);
@@ -1418,12 +1496,16 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
             }
 
             // Normalize percentages to 100%
-            const totalPercentage = currentData.composition.reduce((sum, comp) => sum + comp.percentage, 0);
-            if (totalPercentage > 0 && totalPercentage !== 100) {
-                const scale = 100 / totalPercentage;
-                currentData.composition.forEach(comp => {
-                    comp.percentage = Math.round(comp.percentage * scale);
-                });
+            if (hasCompositionChange && currentData.composition.length > 0) {
+                const totalPercentage = currentData.composition.reduce((sum, comp) => sum + comp.percentage, 0);
+                if (totalPercentage > 0 && totalPercentage !== 100) {
+                    const scale = 100 / totalPercentage;
+                    currentData.composition.forEach(comp => {
+                        comp.percentage = Math.round(comp.percentage * scale);
+                    });
+                }
+                // Also update compositionDetails to match
+                currentData.compositionDetails = currentData.composition;
             }
 
             // Parse supplier changes - improved
@@ -1519,6 +1601,16 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
                 for (let i = 0; i < supplierCount; i++) {
                     currentData.suppliers[i].weight = weightPerSupplier;
                 }
+            }
+            
+            // Preserve validationDetails - only update weight if changed
+            if (currentData.validationDetails && currentData.validationDetails.length > 0) {
+                currentData.validationDetails.forEach(vd => {
+                    if (currentData.weight) {
+                        vd.weightKgs = currentData.weight;
+                        vd.kgs = currentData.weight;
+                    }
+                });
             }
         }
 
@@ -1678,6 +1770,24 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
             
             // Auto-add validation if validation data exists
             if (currentData.validation) {
+                // Store validation details if not already stored
+                if (!currentData.validationDetails) {
+                    currentData.validationDetails = [{
+                        material: currentData.tokenType || currentData.physicalAsset?.material || '',
+                        claim: currentData.validation.qualityGrade || currentData.materialSpec || '',
+                        weightKgs: currentData.weight || currentData.physicalAsset?.weight || '',
+                        kgs: currentData.weight || currentData.physicalAsset?.weight || '',
+                        feedstockType: currentData.physicalAsset?.materialSpec?.includes('Organic') ? 'Organic' : 'Conventional',
+                        feedstockSourceType: 'Manufacturing Plant',
+                        sourceName: currentData.physicalAsset?.productionFacility || currentData.tracer?.supplier || '',
+                        address: currentData.physicalAsset?.productionFacility || currentData.tracer?.supplier || '',
+                        sourceCertification: currentData.compliances?.[0] || currentData.compliance?.selectedCerts?.[0] || '',
+                        invoiceNo: `INV-${currentData.physicalAsset?.batchNumber || Date.now()}`,
+                        invoiceDate: currentData.validation.inspectionDate || currentData.physicalAsset?.productionDate || '',
+                        fullName: currentData.validation.inspector || currentData.createdByName || 'Self-Validation'
+                    }];
+                }
+                
                 setTimeout(() => {
                     const selfValidationList = document.getElementById('selfValidationList');
                     if (selfValidationList && selfValidationList.children.length === 0) {
@@ -2345,8 +2455,9 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
                     assetId: assetId,
                     material: tokenType,
                     composition: compositionStr,
-                    color: mainColor,
+                    color: colorHex,
                     colorHex: colorHex,
+                    colorName: mainColor,
                     weight: weight,
                     batchNumber: batchNumber,
                     productionDate: productionDate,
@@ -2473,6 +2584,25 @@ Now update ONLY the fields that are mentioned in the changes. Keep all other fie
 
         function prevPredictedSection(section) {
             nextPredictedSection(section);
+        }
+
+        // Override getStatusBadge from batches.js to match approve batches styling
+        function getStatusBadge(status) {
+            const statusLabels = {
+                0: 'Pending',
+                1: 'Approved',
+                2: 'Rejected',
+                3: 'Certified'
+            };
+            const statusClasses = {
+                0: 'status-pending',
+                1: 'status-approved',
+                2: 'status-rejected',
+                3: 'status-certified'
+            };
+            const label = statusLabels[status] || 'Unknown';
+            const className = statusClasses[status] || '';
+            return '<span class="status-badge ' + className + '">' + label + '</span>';
         }
     </script>
 </body>

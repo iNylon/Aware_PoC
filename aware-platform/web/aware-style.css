@@ -563,6 +563,26 @@ textarea{
   display:inline-block;
   border:1px solid rgba(41,8,0,.10);
 }
+.status-pending{
+  background: #FFA500;
+  color: white;
+  border: 2px solid #FFA500;
+}
+.status-approved{
+  background: #4CAF50;
+  color: white;
+  border: 2px solid #4CAF50;
+}
+.status-rejected{
+  background: #F44336;
+  color: white;
+  border: 2px solid #F44336;
+}
+.status-certified{
+  background: #2196F3;
+  color: white;
+  border: 2px solid #2196F3;
+}
 .status-concept{ 
   background:rgba(255,51,0,.10); 
   color:rgba(41,8,0,.85); 
