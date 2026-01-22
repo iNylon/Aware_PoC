@@ -126,6 +126,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serveer statische bestanden uit de web map
 app.use(express.static(path.join(__dirname, '..', 'web')));
 
+// Serveer de examples folder
+app.use('/examples', express.static(path.join(__dirname, '..', 'examples')));
+
 // Try to load blockchain contract
 loadContract();
 
@@ -279,6 +282,83 @@ app.get('/api/auth/session', (req, res) => {
 });
 
 // ==================== BATCH ENDPOINTS ====================
+
+// API endpoint for creating batches (with API key or session auth)
+app.post('/api/batch/submit', async (req, res) => {
+  try {
+    if (!blockchainReady) {
+      return res.status(503).json({ error: 'Blockchain not ready' });
+    }
+
+    // Check authentication (session or API key)
+    let username = null;
+    
+    if (req.session.user) {
+      username = req.session.user.username;
+    } else if (req.headers['x-api-key']) {
+      // Simple API key auth - in production use proper API keys
+      const apiKey = req.headers['x-api-key'];
+      const user = users.find(u => u.apiKey === apiKey);
+      if (user) {
+        username = user.username;
+      }
+    } else if (req.body.username && req.body.password) {
+      // Allow username/password in request body for API calls
+      const user = users.find(u => u.username === req.body.username && u.password === req.body.password);
+      if (user) {
+        username = user.username;
+      }
+    }
+
+    if (!username) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { physicalAsset, tracer, validation, compliance } = req.body;
+
+    // Get user's wallet
+    const userWallet = userWallets.get(username);
+    if (!userWallet) {
+      return res.status(500).json({ error: 'Wallet not found for user' });
+    }
+
+    // Create batch on blockchain with status PENDING (0)
+    const contractWithSigner = contract.connect(userWallet.wallet);
+    const tx = await contractWithSigner.createBatch(
+      physicalAsset,
+      tracer,
+      validation,
+      compliance
+    );
+    const receipt = await tx.wait();
+
+    // Get batch ID from event
+    const event = receipt.logs.find(log => {
+      try {
+        return contract.interface.parseLog(log).name === 'BatchCreated';
+      } catch {
+        return false;
+      }
+    });
+
+    let batchId = 0;
+    if (event) {
+      const parsed = contract.interface.parseLog(event);
+      batchId = Number(parsed.args[0]);
+    }
+
+    res.json({
+      success: true,
+      batchId: batchId,
+      status: 'pending',
+      message: 'Batch submitted successfully and awaiting approval',
+      transactionHash: receipt.hash
+    });
+  } catch (error) {
+    console.error('Submit batch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Create batch (blockchain only)
 app.post('/api/batches/create', async (req, res) => {

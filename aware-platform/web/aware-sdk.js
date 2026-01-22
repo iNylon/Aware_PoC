@@ -10,6 +10,106 @@ class AwareSDK {
       timeout: 30000,
       ...options
     };
+    this.credentials = null; // Store login credentials
+  }
+  
+  /**
+   * Login to the Aware platform
+   */
+  async login(username, password) {
+    try {
+      const response = await fetch(`${this.baseURL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+      
+      // Store credentials for API calls
+      this.credentials = { username, password };
+      
+      return data;
+    } catch (error) {
+      throw new Error(`Login failed: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Logout from the Aware platform
+   */
+  async logout() {
+    try {
+      await fetch(`${this.baseURL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      this.credentials = null;
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
+  
+  /**
+   * Check if user is logged in
+   */
+  async checkSession() {
+    try {
+      const response = await fetch(`${this.baseURL}/api/auth/session`, {
+        credentials: 'include'
+      });
+      return await response.json();
+    } catch (error) {
+      throw new Error(`Session check failed: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Submit a batch to the blockchain (requires authentication)
+   */
+  async submitBatch(batchData) {
+    const requestData = {
+      ...batchData
+    };
+    
+    // Add credentials if available
+    if (this.credentials) {
+      requestData.username = this.credentials.username;
+      requestData.password = this.credentials.password;
+    }
+    
+    return this.request('/api/batch/submit', {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(requestData)
+    });
+  }
+  
+  /**
+   * Get all batches from blockchain
+   */
+  async getAllBatches() {
+    return this.request('/api/batches', {
+      method: 'GET',
+      credentials: 'include'
+    });
+  }
+  
+  /**
+   * Get a specific batch by ID
+   */
+  async getBatch(id) {
+    return this.request(`/batch/${id}`, {
+      method: 'GET',
+      credentials: 'include'
+    });
   }
   
   /**
@@ -249,13 +349,281 @@ class SubmissionBuilder {
   }
 }
 
+/**
+ * Helper class voor het bouwen van batch data voor blockchain
+ */
+class BatchBuilder {
+  constructor() {
+    this.physicalAsset = {
+      assetId: '',
+      material: '',
+      composition: '',
+      weight: '0',
+      batchNumber: '',
+      productionDate: '',
+      expiryDate: '',
+      color: '',
+      colorHex: '',
+      productionFacility: '',
+      valueChainMain: '',
+      valueChainSub: '',
+      tokenType: '',
+      materialSpec: '',
+      mainColor: '',
+      sustainableClaims: '',
+      wetProcessing: ''
+    };
+    
+    this.tracer = {
+      supplier: '',
+      farmLocation: '',
+      country: '',
+      gpsCoordinates: '',
+      certifications: '',
+      harvestDate: '',
+      tracerType: '',
+      tracerName: '',
+      tracerDate: '',
+      tracerAdded: 'false'
+    };
+    
+    this.validation = {
+      qualityGrade: '',
+      moistureContent: '',
+      contamination: '',
+      inspectionDate: '',
+      inspector: 'Self-Validation',
+      labResults: '',
+      validationType: ''
+    };
+    
+    this.compliance = {
+      regulatoryStandards: '',
+      sustainabilityCert: '',
+      fairTradeCert: '',
+      organicCert: '',
+      carbonFootprint: '',
+      waterUsage: '',
+      selectedCerts: ''
+    };
+  }
+  
+  // Physical Asset methods
+  setAssetId(assetId) {
+    this.physicalAsset.assetId = assetId;
+    return this;
+  }
+  
+  setBatchNumber(batchNumber) {
+    this.physicalAsset.batchNumber = batchNumber;
+    return this;
+  }
+  
+  setProductionDate(date) {
+    this.physicalAsset.productionDate = date;
+    return this;
+  }
+  
+  setMaterial(material) {
+    this.physicalAsset.material = material;
+    return this;
+  }
+  
+  setWeight(weight) {
+    this.physicalAsset.weight = weight.toString();
+    return this;
+  }
+  
+  setComposition(composition) {
+    this.physicalAsset.composition = composition;
+    return this;
+  }
+  
+  setColor(colorHex, colorName) {
+    this.physicalAsset.color = colorHex;
+    this.physicalAsset.colorHex = colorHex;
+    this.physicalAsset.mainColor = colorName;
+    return this;
+  }
+  
+  setProductionFacility(facility) {
+    this.physicalAsset.productionFacility = facility;
+    return this;
+  }
+  
+  setValueChain(main, sub = '') {
+    this.physicalAsset.valueChainMain = main;
+    this.physicalAsset.valueChainSub = sub;
+    return this;
+  }
+  
+  setSustainableClaims(claims) {
+    this.physicalAsset.sustainableClaims = claims;
+    return this;
+  }
+  
+  setExpiryDate(date) {
+    this.physicalAsset.expiryDate = date;
+    return this;
+  }
+  
+  setTokenType(type) {
+    this.physicalAsset.tokenType = type;
+    return this;
+  }
+  
+  setMaterialSpec(spec) {
+    this.physicalAsset.materialSpec = spec;
+    return this;
+  }
+  
+  setWetProcessing(value) {
+    this.physicalAsset.wetProcessing = value;
+    return this;
+  }
+  
+  // Tracer methods
+  setTracerAdded(added) {
+    this.tracer.tracerAdded = added ? 'true' : 'false';
+    return this;
+  }
+  
+  setTracerType(type) {
+    this.tracer.tracerType = type;
+    return this;
+  }
+  
+  setHarvestDate(date) {
+    this.tracer.harvestDate = date;
+    return this;
+  }
+  
+  setSupplier(supplier) {
+    this.tracer.supplier = supplier;
+    return this;
+  }
+  
+  setCountry(country) {
+    this.tracer.country = country;
+    return this;
+  }
+  
+  setFarmLocation(location) {
+    this.tracer.farmLocation = location;
+    return this;
+  }
+  
+  setGpsCoordinates(coords) {
+    this.tracer.gpsCoordinates = coords;
+    return this;
+  }
+  
+  setTracerCertifications(certs) {
+    this.tracer.certifications = certs;
+    return this;
+  }
+  
+  setTracerName(name) {
+    this.tracer.tracerName = name;
+    return this;
+  }
+  
+  setTracerDate(date) {
+    this.tracer.tracerDate = date;
+    return this;
+  }
+  
+  // Validation methods
+  setInspector(inspector) {
+    this.validation.inspector = inspector;
+    return this;
+  }
+  
+  setInspectionDate(date) {
+    this.validation.inspectionDate = date;
+    return this;
+  }
+  
+  setQualityGrade(grade) {
+    this.validation.qualityGrade = grade;
+    return this;
+  }
+  
+  setMoistureContent(content) {
+    this.validation.moistureContent = content;
+    return this;
+  }
+  
+  setContamination(contamination) {
+    this.validation.contamination = contamination;
+    return this;
+  }
+  
+  setLabResults(results) {
+    this.validation.labResults = results;
+    return this;
+  }
+  
+  setValidationType(type) {
+    this.validation.validationType = type;
+    return this;
+  }
+  
+  // Compliance methods
+  setSustainabilityCert(cert) {
+    this.compliance.sustainabilityCert = cert;
+    return this;
+  }
+  
+  setFairTradeCert(cert) {
+    this.compliance.fairTradeCert = cert;
+    return this;
+  }
+  
+  setOrganicCert(cert) {
+    this.compliance.organicCert = cert;
+    return this;
+  }
+  
+  setRegulatoryStandards(standards) {
+    this.compliance.regulatoryStandards = standards;
+    return this;
+  }
+  
+  setCarbonFootprint(footprint) {
+    this.compliance.carbonFootprint = footprint;
+    return this;
+  }
+  
+  setWaterUsage(usage) {
+    this.compliance.waterUsage = usage;
+    return this;
+  }
+  
+  setSelectedCerts(certs) {
+    this.compliance.selectedCerts = certs;
+    return this;
+  }
+  
+  // Build
+  build() {
+    return {
+      physicalAsset: this.physicalAsset,
+      tracer: this.tracer,
+      validation: this.validation,
+      compliance: this.compliance
+    };
+  }
+}
+
 // Export voor Node.js
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { AwareSDK, SubmissionBuilder };
+  module.exports = { AwareSDK, SubmissionBuilder, BatchBuilder };
 }
 
 // Export voor browser
 if (typeof window !== 'undefined') {
   window.AwareSDK = AwareSDK;
   window.SubmissionBuilder = SubmissionBuilder;
+  window.BatchBuilder = BatchBuilder;
 }
