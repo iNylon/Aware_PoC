@@ -826,7 +826,7 @@
 
         function updatePagination() {
             const totalPages = Math.ceil(filteredReferenceBatches.length / batchesPerPage);
-            const paginationDiv = document.getElementById('batchPagination');
+            const paginationDiv = document.getElementById('referenceBatchPagination');
             
             if (totalPages <= 1) {
                 paginationDiv.innerHTML = '';

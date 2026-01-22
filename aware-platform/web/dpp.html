@@ -94,6 +94,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="pagination"></div>
                     </div>
                 </div>
             </section>
@@ -104,6 +105,8 @@
         let currentUser = null;
         let allBatches = [];
         let filteredBatches = [];
+        let currentPage = 1;
+        const batchesPerPage = 8;
 
         window.addEventListener('load', async function() {
             try {
@@ -147,7 +150,8 @@
                 // Show all approved batches (status 1)
                 allBatches = allBatchesFromBlockchain.filter(batch => batch.status === 1);
                 filteredBatches = allBatches;
-                renderBatchTable(filteredBatches, 'batches-tbody', 'viewDPP');
+                currentPage = 1;
+                displayBatches();
             } catch (error) {
                 console.error('Error loading batches:', error);
             }
@@ -173,7 +177,53 @@
                 return matchesSearch && matchesComposition && matchesStatus;
             });
 
-            renderBatchTable(filteredBatches, 'batches-tbody', 'viewDPP');
+            currentPage = 1;
+            displayBatches();
+        }
+
+        function displayBatches() {
+            const startIndex = (currentPage - 1) * batchesPerPage;
+            const endIndex = startIndex + batchesPerPage;
+            const batchesToShow = filteredBatches.slice(startIndex, endIndex);
+            
+            renderBatchTable(batchesToShow, 'batches-tbody', 'viewDPP');
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">';
+            
+            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} style="${currentPage === 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">← Previous</button>`;
+            
+            paginationHTML += '<div style="display: flex; gap: 5px;">';
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}" onclick="changePage(${i})" style="min-width: 40px;">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    paginationHTML += '<span style="padding: 0 5px;">...</span>';
+                }
+            }
+            paginationHTML += '</div>';
+            
+            paginationHTML += `<button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} style="${currentPage === totalPages ? 'opacity: 0.5; cursor: not-allowed;' : ''}">Next →</button>`;
+            
+            paginationHTML += '</div>';
+            paginationDiv.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredBatches.length / batchesPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            displayBatches();
         }
 
         function viewDPP(batchId) {

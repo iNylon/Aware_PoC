@@ -154,9 +154,27 @@
     <div class="section" id="batchSection" style="display: none;">
       <h2>📦 Batch Submission</h2>
       <p>Submit batches to the blockchain via API. These batches will have status "Pending" and require manager approval.</p>
-      <button onclick="createBasicBatch()">Submit Basic Batch</button>
-      <button onclick="createBatchWithTracer()">Submit Batch with Tracer</button>
-      <button onclick="createColoredBatch()">Submit Colored Batch</button>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="erpSelect">Select ERP System:</label>
+        <select id="erpSelect" onchange="updateBatchOptions()">
+          <option value="">-- Choose ERP System --</option>
+          <option value="textilepro">TextilePro ERP</option>
+          <option value="fiberflow">FiberFlow System</option>
+          <option value="weavemaster">WeaveMaster Cloud</option>
+          <option value="yarntrack">YarnTrack Enterprise</option>
+          <option value="fabricforge">FabricForge ERP</option>
+        </select>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label for="batchSelect">Select Batch:</label>
+        <select id="batchSelect" disabled>
+          <option value="">-- First select an ERP system --</option>
+        </select>
+      </div>
+      
+      <button onclick="submitSelectedBatch()" id="submitBtn" disabled>Submit Selected Batch to Blockchain</button>
     </div>
     
     <div class="section" id="viewSection" style="display: none;">
@@ -175,6 +193,35 @@ Click 'Login' to start...
     const sdk = new AwareSDK('http://localhost:3000');
     const output = document.getElementById('output');
     let currentUser = null;
+    
+    // ERP Batch Data
+    const erpBatches = {
+      textilepro: [
+        { name: 'Organic Cotton Yarn - Batch #TP-2024-001', material: 'Cotton', composition: '100% Organic Cotton', weight: 5000, color: 'Natural White', colorHex: '#F5F5DC', tokenType: 'Yarn', materialSpec: '20/1s Ne' },
+        { name: 'Recycled Polyester Fiber - Batch #TP-2024-002', material: 'Polyester', composition: '100% Recycled PET', weight: 3500, color: 'Navy Blue', colorHex: '#000080', tokenType: 'Fiber', materialSpec: '1.4 Denier' },
+        { name: 'Bamboo Blend Yarn - Batch #TP-2024-003', material: 'Bamboo', composition: '70% Bamboo, 30% Cotton', weight: 2800, color: 'Sage Green', colorHex: '#9DC183', tokenType: 'Yarn', materialSpec: '30/1s Ne' }
+      ],
+      fiberflow: [
+        { name: 'Merino Wool Fiber - Batch #FF-W-458', material: 'Wool', composition: '100% Merino Wool', weight: 4200, color: 'Charcoal Grey', colorHex: '#36454F', tokenType: 'Fiber', materialSpec: '19.5 Micron' },
+        { name: 'Linen Yarn - Batch #FF-L-459', material: 'Linen', composition: '100% European Flax', weight: 3100, color: 'Natural Beige', colorHex: '#E8D5B7', tokenType: 'Yarn', materialSpec: '14/1s NeL' },
+        { name: 'Hemp Fiber - Batch #FF-H-460', material: 'Hemp', composition: '100% Industrial Hemp', weight: 2600, color: 'Tan', colorHex: '#D2B48C', tokenType: 'Fiber', materialSpec: 'Long Fiber' }
+      ],
+      weavemaster: [
+        { name: 'Denim Fabric - Order #WM-D-789', material: 'Cotton', composition: '98% Cotton, 2% Elastane', weight: 6800, color: 'Indigo Blue', colorHex: '#4B0082', tokenType: 'Fabric', materialSpec: 'Twill 12oz' },
+        { name: 'Jersey Knit - Order #WM-J-790', material: 'Cotton', composition: '95% Cotton, 5% Spandex', weight: 4500, color: 'Black', colorHex: '#000000', tokenType: 'Fabric', materialSpec: 'Single Jersey 180gsm' },
+        { name: 'Canvas Fabric - Order #WM-C-791', material: 'Cotton', composition: '100% Organic Cotton', weight: 5200, color: 'Ecru', colorHex: '#F4F0EC', tokenType: 'Fabric', materialSpec: 'Plain Weave 10oz' }
+      ],
+      yarntrack: [
+        { name: 'Silk Yarn Production #YT-2024-Q1-15', material: 'Silk', composition: '100% Mulberry Silk', weight: 1800, color: 'Cream', colorHex: '#FFFDD0', tokenType: 'Yarn', materialSpec: '120/2 Nm' },
+        { name: 'Alpaca Blend #YT-2024-Q1-16', material: 'Alpaca', composition: '80% Alpaca, 20% Merino', weight: 2200, color: 'Camel Brown', colorHex: '#C19A6B', tokenType: 'Yarn', materialSpec: '2/28 Nm' },
+        { name: 'Modal Yarn #YT-2024-Q1-17', material: 'Modal', composition: '100% Beechwood Modal', weight: 3300, color: 'Soft Pink', colorHex: '#FFB6C1', tokenType: 'Yarn', materialSpec: '40/1s Ne' }
+      ],
+      fabricforge: [
+        { name: 'Fleece Fabric Lot #FG-FL-2401', material: 'Polyester', composition: '100% Recycled Polyester', weight: 5500, color: 'Forest Green', colorHex: '#228B22', tokenType: 'Fabric', materialSpec: 'Fleece 280gsm' },
+        { name: 'Satin Weave Lot #FG-ST-2402', material: 'Polyester', composition: '100% Polyester Satin', weight: 3900, color: 'Burgundy', colorHex: '#800020', tokenType: 'Fabric', materialSpec: 'Satin 120gsm' },
+        { name: 'Terry Cloth Lot #FG-TC-2403', material: 'Cotton', composition: '100% Turkish Cotton', weight: 7200, color: 'White', colorHex: '#FFFFFF', tokenType: 'Fabric', materialSpec: 'Terry 400gsm' }
+      ]
+    };
     
     function log(message, type = 'info') {
       const timestamp = new Date().toLocaleTimeString();
@@ -287,8 +334,84 @@ Click 'Login' to start...
         log('❌ Session check failed: ' + error.message, 'error');
       }
     }
+        function updateBatchOptions() {
+      const erpSelect = document.getElementById('erpSelect');
+      const batchSelect = document.getElementById('batchSelect');
+      const submitBtn = document.getElementById('submitBtn');
+      
+      const selectedErp = erpSelect.value;
+      
+      if (!selectedErp) {
+        batchSelect.innerHTML = '<option value="">-- First select an ERP system --</option>';
+        batchSelect.disabled = true;
+        submitBtn.disabled = true;
+        return;
+      }
+      
+      const batches = erpBatches[selectedErp];
+      batchSelect.innerHTML = '<option value="">-- Choose a batch --</option>';
+      
+      batches.forEach((batch, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = batch.name;
+        batchSelect.appendChild(option);
+      });
+      
+      batchSelect.disabled = false;
+      batchSelect.onchange = () => {
+        submitBtn.disabled = batchSelect.value === '';
+      };
+    }
     
-    async function createBasicBatch() {
+    async function submitSelectedBatch() {
+      const erpSelect = document.getElementById('erpSelect');
+      const batchSelect = document.getElementById('batchSelect');
+      
+      const selectedErp = erpSelect.value;
+      const selectedBatchIndex = batchSelect.value;
+      
+      if (!selectedErp || selectedBatchIndex === '') {
+        log('❌ Please select both an ERP system and a batch', 'error');
+        return;
+      }
+      
+      clearOutput();
+      const batchData = erpBatches[selectedErp][selectedBatchIndex];
+      log(`📦 Submitting batch: ${batchData.name}`, 'info');
+      log(`📊 Material: ${batchData.material}, Weight: ${batchData.weight}kg, Color: ${batchData.color}`, 'info');
+      
+      try {
+        const batch = new BatchBuilder()
+          .setAssetId('asset-' + Date.now())
+          .setMaterial(batchData.material)
+          .setComposition(batchData.composition)
+          .setWeight(batchData.weight)
+          .setBatchNumber(batchData.name.split('#')[1] || 'BATCH-' + Date.now())
+          .setProductionDate(new Date().toLocaleDateString('en-GB'))
+          .setColor(batchData.colorHex, batchData.color)
+          .setProductionFacility('ERP Auto-Import')
+          .setValueChain('Manufacturing', selectedErp)
+          .setSustainableClaims('Traceable via ' + erpSelect.options[erpSelect.selectedIndex].text)
+          .setExpiryDate('')
+          .setTokenType(batchData.tokenType)
+          .setMaterialSpec(batchData.materialSpec)
+          .setWetProcessing('')
+          .setInspector('ERP System Validation')
+          .setInspectionDate(new Date().toLocaleDateString('en-GB'))
+          .setSustainabilityCert('Pending')
+          .build();
+        
+        const result = await sdk.submitBatch(batch);
+        log(`✅ Batch submitted successfully!`, 'success');
+        log(`📋 Batch ID: ${result.batchId}`, 'success');
+        log(`📊 Status: ${result.status} (awaiting manager approval)`, 'warning');
+        log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        log('❌ Error: ' + error.message, 'error');
+      }
+    }
+        async function createBasicBatch() {
       clearOutput();
       log('📦 Creating basic batch...', 'info');
       
